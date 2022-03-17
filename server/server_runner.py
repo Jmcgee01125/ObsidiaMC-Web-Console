@@ -10,6 +10,8 @@ class ServerRunner:
     ----------
     server_directory: `str`
         The path to the directory of this server's jar file
+    server_name: `str`
+        The name of this server, or None to use the lowest directory of the server directory (i.e. Servers/ServerName/server.jar -> ServerName)
     jarname: `str`
         The server jar, default "server.jar"
     args: `list[str]`
@@ -19,40 +21,78 @@ class ServerRunner:
     Attributes
     ----------
     server_directory: `str`
-        The absolute path to the server directory containing the jar file.
+        The absolute path to the server directory containing the jar file
+    server_name: `str`
+        The name of the server being run (note that this is not necessarily read from the config file)
+    is_started: `bool`
+        True if the server is currently running (this is more restrictive than the process merely being active)
     '''
 
-    def __init__(self, server_directory: str, jarname: str = "server.jar", args: list[str] = []):
+    def __init__(self, server_directory: str, server_name: str = None, jarname: str = "server.jar", args: list[str] = []):
+        self.is_started = False
         self.server_directory = os.path.abspath(server_directory)
+        if (server_name == None):
+            self.server_name = os.path.basename(server_directory)
+        else:
+            self.server_name = server_name
         self._jarname = jarname
         self._args = args
         self._server = None
+        self._listeners = set()
 
-    def start(self):
-        '''
-        Start the server.
+    async def start(self):
+        '''Start the server process if not already started'''
+        if (self._server == None or not self.is_active()):
+            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + [""],  # "-nogui missing"
+                                            stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
+            await self._listen_for_logs()
 
-        Blocks until the server is fully started (may be half a minute or more).
+    async def _listen_for_logs(self):
         '''
-        self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
-                                        stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
-        # TODO: block until stdout reports that server is started, and set a flag
+        Monitors stdout for logs, reporting them to listeners.
+
+        This function should only be called once per process.
+        '''
+        while (self.is_active()):
+            line = self._server.stdout.readline().decode().strip()
+            await self._check_if_started(line)
+            await self._notify_listeners(line)
+        # process is dead
+        self.is_started = False
+        self._server = None
+
+    async def _check_if_started(self, msg: str):
+        if not self.is_started and "INFO]: Done (" in msg:
+            self.is_started = True
+
+    async def _notify_listeners(self, msg: str):
+        for listener in self._listeners:
+            await listener.notify(msg)
+
+    async def add_listener(self, listener_object):
+        '''
+        Subscribe the given object to be notified whenever there is a new message in the server console.
+
+        The subscriber must contain the async function "notify(message: `str`)"
+        '''
+        try:
+            await listener_object.notify(f"Subscribed to logs for {self.server_name}.")
+        except Exception:
+            raise AttributeError("Listener does not contain async notify(message: str) attribute.")
+        else:
+            self._listeners.add(listener_object)
+
+    def is_active(self) -> bool:
+        '''Check if the server's thread is currenlty active (not that the server is running).'''
+        return self._server != None and self._server.poll() == None
 
     def write(self, message):
-        '''Writes a single line message to the server console. \n automatically appended.'''
+        '''Write a single line message to the server console. Newline automatically appended.'''
         try:
             self._server.stdin.write(bytes(f"{message}\n", "utf-8"))
             self._server.stdin.flush()
         except Exception as e:
             print("Write failed:", e)
-
-    def is_running(self) -> bool:
-        '''Check if the server is currently running.'''
-        # TODO: bad, use a variable self.is_running that toggles in start and stop
-        return self._server.poll() != None
-
-    # TODO: listener for messages, loop stuck on for `line in iter(self.server.stdout.readline, "")`
-    # should probably use an observer system
 
     def get_full_log(self) -> list[str]:
         '''Get a list of all console logs for the current server session.'''
@@ -64,9 +104,15 @@ class ServerRunner:
 
     def stop(self):
         '''Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon)'''
-        # TODO: set flag is_running to false
         try:
             self._server.stdin.flush()
-            self._server.communicate(b"stop\n")
+            self._server.communicate(b"stop\n")  # should kill process
         except Exception as e:
             print("Stop command failed:", e)
+        finally:
+            self.is_started = False
+
+    def kill(self):
+        '''Kills the server process. DO NOT RUN THIS UNLESS YOU ABSOLUTELY HAVE TO.'''
+        self._server.kill()
+        self.is_started = False

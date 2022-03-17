@@ -1,6 +1,7 @@
 from server.server_runner import ServerRunner
 from server.rcon import RCONConnection
 from dotenv import load_dotenv
+import asyncio
 import os
 
 from time import sleep
@@ -13,26 +14,25 @@ from time import sleep
 
 load_dotenv()
 
+# TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
 server_dir = os.getenv("SERVER_DIR")
-# TODO: read args from an options file in the server dir (obsidia_ops.txt?)
+
+# TODO: read args from an options file in the server dir (obsidia_ops.conf?)
 server_args = ["-server", "-Xms2G", "-Xmx2G"]
 
+
+class Listener:
+    def __init__(self):
+        pass
+
+    async def notify(self, message: str):
+        print(message)
+
+
 server = ServerRunner(server_dir, args=server_args)
-server.start()
+listener = Listener()
 
-sleep(40)  # TODO: instead, block until started in server.start()
-
-rcon = RCONConnection("localhost", "adminpassword", 25575)  # NOTE: may not be neccessary since server.write works
-rcon.connect()
-server.write("say hello")
-
-sleep(5)
-
-rcon.send_command("say cringe")
-
-sleep(5)
-
-rcon.stop()
-server.stop()
-
-print(*server.get_full_log())
+loop = asyncio.get_event_loop()
+loop.run_until_complete(server.add_listener(listener))
+loop.run_until_complete(server.start())
+loop.close()
