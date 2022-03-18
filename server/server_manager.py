@@ -23,12 +23,17 @@ class ServerManager:
         self._load_server_information()
         self._load_config_information()
         self.server: ServerRunner = None
+        self._server_thread: threading.Thread = None
 
     def start_server(self):
         '''Creates a new thread to run the server in, returning the Server object.'''
         self.server = ServerRunner(self.server_directory, server_name=self._motd, jarname=self._server_jar, args=self._args)
-        server_thread = threading.Thread(target=self._asynced_server_start)
-        server_thread.start()
+        self._server_thread = threading.Thread(target=self._asynced_server_start)
+        self._server_thread.start()
+
+    def server_running(self):
+        '''Returns true if the server thread is running, false otherwise.'''
+        return self._server_thread != None and self._server_thread.is_alive()
 
     def _asynced_server_start(self):
         asyncio.run(self.server.start())
@@ -41,6 +46,7 @@ class ServerManager:
                 self._motd = line[5:].strip()
 
     def _load_config_information(self):
+        # TODO: read port info and the like
         config = ConfigParser()
         conf_exists = config.read(os.path.join(self.server_directory, self.config_file))
         if len(conf_exists) != 0:
@@ -55,6 +61,7 @@ class ServerManager:
             self._create_config()
 
     def _create_config(self):
+        # TODO: copy a default config file (make a "configs" folder or something)
         with open(self.config_file, "w") as file:
             file.write("# For datetimes, input as SMTWRFD where S = Sunday, D = Saturday, etc.\n")
             file.write("# Present letters indicate days where the action will be taken.\n")
@@ -75,6 +82,8 @@ class ServerManager:
             file.write("\n")
         self._load_config_information()
 
+    # TODO: get_config function to make it easier to edit configs in the GUI later
+
     # TODO: edit_config function that then calls _create_config, which only loads defaults if there isn't anything loaded when it's called
 
     # TODO: config option for server name or use motd (Server Name or blank)
@@ -82,3 +91,7 @@ class ServerManager:
 
     # TODO: get information about the server like playercount, uptime,
     # TODO: by tracking console logs like who joins and whatnot, we don't need mctools at all - await self._parse_new_message(line)
+
+    # TODO: config note before each option, like explanation of how args are parsed
+
+    # TODO: make a properties reader and a config reader that's strong against missing items (in case of update)

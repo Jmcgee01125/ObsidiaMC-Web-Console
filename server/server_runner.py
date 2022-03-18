@@ -1,5 +1,6 @@
 import subprocess
 import os
+import threading
 
 
 class ServerRunner:
@@ -39,11 +40,11 @@ class ServerRunner:
         self._listeners = set()
 
     async def run(self):
-        '''Alias to start'''
+        '''Alias to start.'''
         await self.start()
 
     async def start(self):
-        '''Start the server process if not already started'''
+        '''Start the server process if not already started.'''
         if (self._server == None or not self.is_active()):
             self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
                                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
@@ -73,7 +74,7 @@ class ServerRunner:
 
     def add_listener(self, listener_object):
         '''
-        Subscribe the given object to be notified whenever there is a new message in the server console.
+        Subscribe the given object to be notified on this thread whenever there is a new message in the server console.
 
         The subscriber must contain the function "notify(message: `str`)"
         '''
@@ -85,11 +86,12 @@ class ServerRunner:
             self._listeners.add(listener_object)
 
     def is_active(self) -> bool:
-        '''Check if the server's thread is currently active (not that the server is running).'''
+        '''Check if the server's thread is currently active (not necessarily that the server is running).'''
         return self._server != None and self._server.poll() == None
 
     def is_started(self) -> bool:
         '''Check if the server is currently started, i.e. players are able to join.'''
+        return self._is_started
 
     def write(self, message):
         '''Write a single line message to the server console. Newline automatically appended.'''
@@ -108,7 +110,7 @@ class ServerRunner:
         return log_file.readlines()
 
     def stop(self):
-        '''Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon)'''
+        '''Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon).'''
         try:
             self._server.stdin.flush()
             self._server.communicate(b"stop\n")  # should kill process
