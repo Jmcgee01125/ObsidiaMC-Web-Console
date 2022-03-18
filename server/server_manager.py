@@ -76,3 +76,9 @@ class ServerManager:
         self._load_config_information()
 
     # TODO: edit_config function that then calls _create_config, which only loads defaults if there isn't anything loaded when it's called
+
+    # TODO: config option for server name or use motd (Server Name or blank)
+    # TODO: don't forget server-icon.png! get_favicon or something
+
+    # TODO: get information about the server like playercount, uptime,
+    # TODO: by tracking console logs like who joins and whatnot, we don't need mctools at all - await self._parse_new_message(line)

@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import os
 
 
-# TODO: web interface with uptime, playercount, editable config, and of course a console
+# TODO: web interface (web2py?) with uptime, playercount, editable config, and of course a console
 
 
 # TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
