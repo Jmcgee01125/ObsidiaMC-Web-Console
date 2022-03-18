@@ -24,12 +24,10 @@ class ServerRunner:
         The absolute path to the server directory containing the jar file
     server_name: `str`
         The name of the server being run (note that this is not necessarily read from the config file)
-    is_started: `bool`
-        True if the server is currently running (this is more restrictive than the process merely being active)
     '''
 
     def __init__(self, server_directory: str, server_name: str = None, jarname: str = "server.jar", args: list[str] = []):
-        self.is_started = False
+        self._is_started = False
         self.server_directory = os.path.abspath(server_directory)
         if (server_name == None):
             self.server_name = os.path.basename(server_directory)
@@ -40,10 +38,14 @@ class ServerRunner:
         self._server = None
         self._listeners = set()
 
+    async def run(self):
+        '''Alias to start'''
+        await self.start()
+
     async def start(self):
         '''Start the server process if not already started'''
         if (self._server == None or not self.is_active()):
-            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + [""],  # "-nogui missing"
+            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
                                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
             await self._listen_for_logs()
 
@@ -58,33 +60,36 @@ class ServerRunner:
             await self._check_if_started(line)
             await self._notify_listeners(line)
         # process is dead
-        self.is_started = False
+        self._is_started = False
         self._server = None
 
     async def _check_if_started(self, msg: str):
-        if not self.is_started and "INFO]: Done (" in msg:
-            self.is_started = True
+        if not self._is_started and "INFO]: Done (" in msg:
+            self._is_started = True
 
     async def _notify_listeners(self, msg: str):
         for listener in self._listeners:
-            await listener.notify(msg)
+            listener.notify(msg)
 
-    async def add_listener(self, listener_object):
+    def add_listener(self, listener_object):
         '''
         Subscribe the given object to be notified whenever there is a new message in the server console.
 
-        The subscriber must contain the async function "notify(message: `str`)"
+        The subscriber must contain the function "notify(message: `str`)"
         '''
         try:
-            await listener_object.notify(f"Subscribed to logs for {self.server_name}.")
+            listener_object.notify(f"Subscribed to logs for {self.server_name}.")
         except Exception:
-            raise AttributeError("Listener does not contain async notify(message: str) attribute.")
+            raise AttributeError("Listener does not contain notify(message: str) attribute.")
         else:
             self._listeners.add(listener_object)
 
     def is_active(self) -> bool:
-        '''Check if the server's thread is currenlty active (not that the server is running).'''
+        '''Check if the server's thread is currently active (not that the server is running).'''
         return self._server != None and self._server.poll() == None
+
+    def is_started(self) -> bool:
+        '''Check if the server is currently started, i.e. players are able to join.'''
 
     def write(self, message):
         '''Write a single line message to the server console. Newline automatically appended.'''
@@ -97,7 +102,7 @@ class ServerRunner:
     def get_full_log(self) -> list[str]:
         '''Get a list of all console logs for the current server session.'''
         try:
-            log_file = open(os.path.join(self.server_directory, "logs", "latest.log"))
+            log_file = open(os.path.join(self.server_directory, "logs", "latest.log"), "r")
         except IOError:
             return "No latest log found."
         return log_file.readlines()
@@ -110,9 +115,9 @@ class ServerRunner:
         except Exception as e:
             print("Stop command failed:", e)
         finally:
-            self.is_started = False
+            self._is_started = False
 
     def kill(self):
         '''Kills the server process. DO NOT RUN THIS UNLESS YOU ABSOLUTELY HAVE TO.'''
         self._server.kill()
-        self.is_started = False
+        self._is_started = False
