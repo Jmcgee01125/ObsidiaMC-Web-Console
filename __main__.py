@@ -2,13 +2,16 @@ from server.server_manager import ServerManager
 from server.server import ServerListener
 from dotenv import load_dotenv
 import threading
+import asyncio
 import os
 
 
 # TODO: web interface (web2py?) with uptime, playercount + names (mctools?), editable config, and of course a console
+# TODO: also don't forget a way to restore backups (while server is offline)
 
 # TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
 
+# TODO: create a guide for each option, such as using 0 to disable maximum backups or how SMTWRFD works
 
 # TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
 load_dotenv()
@@ -23,17 +26,34 @@ class DebugPrintListener:
         threading.Thread(target=self._print_queue).start()
 
     def _print_queue(self):
-        while (manager.server_running()):
+        while (manager.server_should_be_running()):
             if (self._server_listener.has_next()):
                 print(self._server_listener.next())
+        print("DebugPrintListener closing")
 
 
-manager = ServerManager(server_dir)
-manager.start_server()
+async def start_server():
+    global manager
+    manager = ServerManager(server_dir)
+    await manager.start_server()
 
-listener = ServerListener(manager.server)
-DebugPrintListener(listener).start()
 
-while (manager.server_running()):
-    command = input().strip()
-    manager.server.write(command)
+async def watch_user_input():
+    while (manager.server_should_be_running()):
+        command = await asyncio.get_running_loop().run_in_executor(None, input)
+        manager.write(command.strip())
+
+
+async def debug_listen_to_server():
+    listener = ServerListener(manager.server)
+    DebugPrintListener(listener).start()
+
+
+async def queue_initial_actions():
+    await start_server()
+    await debug_listen_to_server()
+    await watch_user_input()
+
+
+if __name__ == "__main__":
+    asyncio.run(queue_initial_actions())

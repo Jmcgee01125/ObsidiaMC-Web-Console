@@ -52,14 +52,20 @@ class ObsidiaConfigParser:
         return_default: `bool`
             If true, will return the default value if the option does not exist. If true, will return None.
             If there is no default value, will return None.
+            If the default value is read, it will be written to the config file.
 
         Return
         ------
         The string in the option or default, for the client to parse
         '''
         value = self._parser.get(section, option, fallback=None)
-        if value == None:
-            return self._defaults_parser.get(section, option, fallback=None)
+        if value == None and return_default:
+            default_value = self._defaults_parser.get(section, option, fallback=None)
+            if default_value != None:
+                self._parser.set(section, option, default_value)
+                self.write()
+            return default_value
+        return value
 
     def add_section(self, section: str):
         '''Add a new section to the config.'''

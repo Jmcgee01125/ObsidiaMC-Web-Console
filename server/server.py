@@ -92,14 +92,14 @@ class ServerRunner:
         '''Check if the server's thread is currently active (not necessarily that the server is running).'''
         return self._server != None and self._server.poll() == None
 
-    def is_started(self) -> bool:
+    def is_ready(self) -> bool:
         '''Check if the server is currently started, i.e. players are able to join.'''
         return self._is_started
 
-    def write(self, message):
-        '''Write a single line message to the server console. Newline automatically appended.'''
+    def write(self, command: str):
+        '''Write a single line command to the server console. Newline automatically appended.'''
         try:
-            self._server.stdin.write(bytes(f"{message}\n", "utf-8"))
+            self._server.stdin.write(bytes(f"{command}\n", "utf-8"))
             self._server.stdin.flush()
         except Exception as e:
             print("Write failed:", e)
