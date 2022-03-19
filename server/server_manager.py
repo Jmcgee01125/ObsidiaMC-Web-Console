@@ -55,10 +55,10 @@ class ServerManager:
         # NOTE: the config items could be None in some cases, but we /should/ be reading from defaults anyway
 
         self._server_jar = config.get("Server Information", "server_jar").strip()
-        self._args = config.get("Server Information", "args").strip().split(" ")
         self._server_name = config.get("Server Information", "server_name").strip()
         if self._server_name == "":
             self._server_name = None
+        self._args = config.get("Server Information", "args").strip().split(" ")
 
         self._do_autorestart = config.get("Restarts", "autorestart").strip().lower() == "true"
         self._autorestart_datetime = config.get("Restarts", "autorestart_datetime").strip()

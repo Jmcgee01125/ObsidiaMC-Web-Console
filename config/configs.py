@@ -1,5 +1,5 @@
 from configparser import ConfigParser
-from typing import Union, Any
+from typing import Union
 import os
 
 
