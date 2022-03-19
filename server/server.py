@@ -1,5 +1,5 @@
-from queue import Queue
 import subprocess
+import queue
 import os
 
 
@@ -140,7 +140,7 @@ class ServerListener:
 
     def __init__(self, server: ServerRunner):
         self._server = server
-        self._message_queue = Queue()
+        self._message_queue = queue.Queue()
         self._server.add_listener(self)
 
     def update(self, message: str):
@@ -151,10 +151,10 @@ class ServerListener:
         if (self._message_queue.empty()):
             return None
         else:
-            # NOTE: in rare circumstances, it will pass an empty check but not have an item, this causes a block until an item is added (hence timeout)
+            # NOTE: it's possible to pass an empty check but not have an item, this causes a block until an item is added (hence timeout w/ try)
             try:
                 return self._message_queue.get(timeout=1)
-            except Exception:
+            except queue.Empty:
                 return None
 
     def has_next(self) -> bool:

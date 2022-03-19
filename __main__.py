@@ -1,12 +1,11 @@
 from server.server_manager import ServerManager
 from server.server import ServerListener
-from config.configs import ObsidiaConfigParser
 from dotenv import load_dotenv
 import threading
 import os
 
 
-# TODO: web interface (web2py?) with uptime, playercount, editable config, and of course a console
+# TODO: web interface (web2py?) with uptime, playercount + names (mctools?), editable config, and of course a console
 
 # TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
 
@@ -14,8 +13,6 @@ import os
 # TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
 load_dotenv()
 server_dir = os.getenv("SERVER_DIR")
-
-configreader = ObsidiaConfigParser(os.path.join(server_dir, "obsidia.conf"))
 
 
 class DebugPrintListener:
