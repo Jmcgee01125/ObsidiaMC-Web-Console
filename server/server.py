@@ -58,15 +58,18 @@ class ServerRunner:
         '''
         while (self.is_active()):
             line = self._server.stdout.readline().decode().strip()
-            await self._check_if_started(line)
             await self._update_listeners(line)
+            await self._check_if_started(line)
         # process is dead
         self._is_started = False
         self._server = None
 
     async def _check_if_started(self, msg: str):
-        if not self._is_started and "INFO]: Done (" in msg:
-            self._is_started = True
+        if not self._is_started:
+            if "INFO]: Done (" in msg:
+                self._is_started = True
+            elif "INFO]: You need to agree to the EULA" in msg:
+                self.kill()
 
     async def _update_listeners(self, msg: str):
         for listener in self._listeners:
@@ -149,7 +152,10 @@ class ServerListener:
             return None
         else:
             # NOTE: in rare circumstances, it will pass an empty check but not have an item, this causes a block until an item is added (hence timeout)
-            return self._message_queue.get(timeout=1)
+            try:
+                return self._message_queue.get(timeout=1)
+            except Exception:
+                return None
 
     def has_next(self) -> bool:
         '''Returns true if there is a message in queue, false otherwise.'''

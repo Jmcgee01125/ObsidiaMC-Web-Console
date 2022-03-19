@@ -1,7 +1,7 @@
 from server.server_manager import ServerManager
 from server.server import ServerListener
+from config.configs import ConfigReader
 from dotenv import load_dotenv
-from queue import Queue
 import threading
 import os
 
@@ -15,7 +15,7 @@ import os
 load_dotenv()
 server_dir = os.getenv("SERVER_DIR")
 
-# TODO: debug print to console handler since we have a ServerListener now
+configreader = ConfigReader(os.path.join(server_dir, "obsidia.conf"))
 
 
 class DebugPrintListener:
