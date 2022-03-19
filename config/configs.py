@@ -3,7 +3,7 @@ from typing import Union
 import os
 
 
-class ConfigReader:
+class ObsidiaConfigParser:
     '''
     Open and interact with a config file.
 
@@ -65,6 +65,47 @@ class ConfigReader:
         '''Add a new section to the config.'''
         self._parser.add_section(section)
 
-    def add_option(self, section: str, option: str, value: Union[str, None]):
+    def remove_section(self, section: str):
+        '''Removes a section and all of its options.'''
+        self._parser.remove_section(section)
+
+    def set_option(self, section: str, option: str, value: Union[str, None]):
         '''Add a new option to the config, including the value.'''
         self._parser.set(section, option, value)
+
+
+class MCPropertiesParser:
+    '''
+    Open and interact with a server.properties file.
+
+    Parameters
+    ----------
+    properties_file: `str`
+        The properties file to read from
+    '''
+
+    def __init__(self, properties_file: str):
+        self._file = os.path.abspath(properties_file)
+
+    def get(self, option: str) -> str:
+        '''Read a specified option from the properties file.'''
+        for line in open(self._file, "r"):
+            if line[:len(option)] == option:
+                return line[len(option) + 1:].strip()
+        return None
+
+    def set(self, option: str, value: str):
+        '''
+        Edit a specified option to a new value.
+
+        If the option does not exist, there is no effect.
+        '''
+        full_lines = ""
+        for line in open(self._file, "r"):
+            if line[:len(option)] == option:
+                full_lines += line[:len(option) + 1] + value + "\n"
+            else:
+                full_lines += line
+        file_write = open(self._file, "w")
+        file_write.write(full_lines)
+        file_write.close()

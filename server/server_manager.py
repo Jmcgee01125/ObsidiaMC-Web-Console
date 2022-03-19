@@ -1,4 +1,4 @@
-from config.configs import ConfigReader
+from config.configs import MCPropertiesParser, ObsidiaConfigParser
 from server.server import ServerRunner
 import threading
 import asyncio
@@ -41,18 +41,15 @@ class ServerManager:
         asyncio.run(self.server.start())
 
     def _load_server_information(self):
-        for line in open(os.path.join(self.server_directory, "server.properties"), "r"):
-            if "level-name" in line:
-                self._level_name = line[11:].strip()
-            if "motd" in line:
-                self._motd = line[5:].strip()
-            # TODO: port and other stuff like allow-flight (to be toggled in gui - or should gui read that? server.properties parser?)
+        config = MCPropertiesParser(os.path.join(self.server_directory, "server.properties"))
+        self._level_name = config.get("level-name").strip()
+        self._motd = config.get("motd").strip()
 
     def reload_configs(self):
         '''Reload the configs from the current config file.'''
-        config = ConfigReader(os.path.join(self.server_directory, self.config_file))
+        config = ObsidiaConfigParser(os.path.join(self.server_directory, self.config_file))
 
-        # NOTE: the config items could be None in some cases, but we /should/ be reading from defaults anyway
+        # NOTE: the config items could be None in some cases, but we /should/ be reading from defaults anyway (crashing is fine)
 
         self._server_jar = config.get("Server Information", "server_jar").strip()
         self._server_name = config.get("Server Information", "server_name").strip()
@@ -62,7 +59,7 @@ class ServerManager:
 
         self._do_autorestart = config.get("Restarts", "autorestart").strip().lower() == "true"
         self._autorestart_datetime = config.get("Restarts", "autorestart_datetime").strip()
-        self._restart_on_crash = config.get("Restarts", "restart_on_crash").strop().lower() == "true"
+        self._restart_on_crash = config.get("Restarts", "restart_on_crash").strip().lower() == "true"
 
         self._do_backups = config.get("Backups", "do_backups").strip().lower() == "true"
         self._max_backups = int(config.get("Backups", "max_backups").strip())

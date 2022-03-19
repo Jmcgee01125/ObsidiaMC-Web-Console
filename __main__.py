@@ -1,6 +1,6 @@
 from server.server_manager import ServerManager
 from server.server import ServerListener
-from config.configs import ConfigReader
+from config.configs import ObsidiaConfigParser
 from dotenv import load_dotenv
 import threading
 import os
@@ -15,7 +15,7 @@ import os
 load_dotenv()
 server_dir = os.getenv("SERVER_DIR")
 
-configreader = ConfigReader(os.path.join(server_dir, "obsidia.conf"))
+configreader = ObsidiaConfigParser(os.path.join(server_dir, "obsidia.conf"))
 
 
 class DebugPrintListener:
