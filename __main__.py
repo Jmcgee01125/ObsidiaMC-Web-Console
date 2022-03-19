@@ -1,4 +1,5 @@
 from server.server_manager import ServerManager
+from server.server import ServerListener
 from dotenv import load_dotenv
 from queue import Queue
 import threading
@@ -14,28 +15,27 @@ import os
 load_dotenv()
 server_dir = os.getenv("SERVER_DIR")
 
+# TODO: debug print to console handler since we have a ServerListener now
 
-class Listener:
-    def __init__(self, manager: ServerManager):
-        self.messages_queue = Queue()
-        self.manager = manager
-        # DEBUG: queue is good, but should probably not be spawning threads here for printing, instead let main watch the queue with an async
-        threading.Thread(target=self.clear_queue).start()
 
-    def notify(self, message: str):
-        self.messages_queue.put(message)
+class DebugPrintListener:
+    def __init__(self, server_listener: ServerListener):
+        self._server_listener = server_listener
 
-    def clear_queue(self):
+    def start(self):
+        threading.Thread(target=self._print_queue).start()
+
+    def _print_queue(self):
         while (manager.server_running()):
-            if (not self.messages_queue.empty()):
-                print(self.messages_queue.get())
+            if (self._server_listener.has_next()):
+                print(self._server_listener.next())
 
 
 manager = ServerManager(server_dir)
 manager.start_server()
 
-listener = Listener(manager)
-manager.server.add_listener(listener)
+listener = ServerListener(manager.server)
+DebugPrintListener(listener).start()
 
 while (manager.server_running()):
     command = input().strip()

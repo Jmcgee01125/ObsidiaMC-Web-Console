@@ -1,4 +1,4 @@
-from server.server_runner import ServerRunner
+from server.server import ServerRunner
 from configparser import ConfigParser
 import threading
 import asyncio
@@ -31,7 +31,7 @@ class ServerManager:
         self._server_thread = threading.Thread(target=self._asynced_server_start)
         self._server_thread.start()
 
-    def server_running(self):
+    def server_running(self) -> bool:
         '''Returns true if the server thread is running, false otherwise.'''
         return self._server_thread != None and self._server_thread.is_alive()
 
@@ -95,3 +95,6 @@ class ServerManager:
     # TODO: config note before each option, like explanation of how args are parsed
 
     # TODO: make a properties reader and a config reader that's strong against missing items (in case of update)
+    # TODO: separate module + class, send it the file to read and .get(section, name) -> item OR default item, also has a save_file function
+
+    # TODO: restart on unexpected shutdown logic + config option

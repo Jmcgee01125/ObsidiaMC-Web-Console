@@ -1,6 +1,6 @@
+from queue import Queue
 import subprocess
 import os
-import threading
 
 
 class ServerRunner:
@@ -59,7 +59,7 @@ class ServerRunner:
         while (self.is_active()):
             line = self._server.stdout.readline().decode().strip()
             await self._check_if_started(line)
-            await self._notify_listeners(line)
+            await self._update_listeners(line)
         # process is dead
         self._is_started = False
         self._server = None
@@ -68,20 +68,20 @@ class ServerRunner:
         if not self._is_started and "INFO]: Done (" in msg:
             self._is_started = True
 
-    async def _notify_listeners(self, msg: str):
+    async def _update_listeners(self, msg: str):
         for listener in self._listeners:
-            listener.notify(msg)
+            listener.update(msg)
 
     def add_listener(self, listener_object):
         '''
         Subscribe the given object to be notified on this thread whenever there is a new message in the server console.
 
-        The subscriber must contain the function "notify(message: `str`)"
+        The subscriber must contain the function "update(message: `str`)", otherwise throws AttributeError when adding listener.
         '''
         try:
-            listener_object.notify(f"Subscribed to logs for {self.server_name}.")
+            listener_object.update(f"Subscribed to logs for {self.server_name}.")
         except Exception:
-            raise AttributeError("Listener does not contain notify(message: str) attribute.")
+            raise AttributeError("Listener does not contain update(message: str) attribute.")
         else:
             self._listeners.add(listener_object)
 
@@ -123,3 +123,34 @@ class ServerRunner:
         '''Kills the server process. DO NOT RUN THIS UNLESS YOU ABSOLUTELY HAVE TO.'''
         self._server.kill()
         self._is_started = False
+
+
+class ServerListener:
+    '''
+    Listens to a given server and creates a queue that can be queried for messages
+
+    Parameters
+    ----------
+    server: `ServerRunner`
+        The server to listen to
+    '''
+
+    def __init__(self, server: ServerRunner):
+        self._server = server
+        self._message_queue = Queue()
+        self._server.add_listener(self)
+
+    def update(self, message: str):
+        self._message_queue.put(message)
+
+    def next(self) -> str:
+        '''Returns the first message in the queue, or None if empty.'''
+        if (self._message_queue.empty()):
+            return None
+        else:
+            # NOTE: in rare circumstances, it will pass an empty check but not have an item, this causes a block until an item is added (hence timeout)
+            return self._message_queue.get(timeout=1)
+
+    def has_next(self) -> bool:
+        '''Returns true if there is a message in queue, false otherwise.'''
+        return not self._message_queue.empty()
