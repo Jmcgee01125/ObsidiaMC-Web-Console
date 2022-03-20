@@ -7,7 +7,6 @@ import os
 
 
 # TODO: web interface (web2py?) with uptime, playercount + names (mctools?), editable config, and of course a console
-
 # TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
 
 # TODO: create a guide for each option, such as using 0 to disable maximum backups or how SMTWRFD works

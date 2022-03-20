@@ -57,10 +57,14 @@ class ServerRunner:
         This function should only be called once per server thread.
         '''
         while (self.is_active()):
-            line = self._server.stdout.readline().decode().strip()
-            await self._update_listeners(line)
-            if not self._is_ready:
-                await self._check_if_ready(line)
+            try:
+                line = self._server.stdout.readline().decode().strip()
+            except ValueError:  # info->buf could be NUL
+                pass
+            else:
+                await self._update_listeners(line)
+                if not self._is_ready:
+                    await self._check_if_ready(line)
         # process is dead
         self._is_ready = False
         self._server = None

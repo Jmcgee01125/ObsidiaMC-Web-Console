@@ -45,9 +45,6 @@ class ServerManager:
         self._load_server_information()
         self.reload_configs()
 
-    def _get_current_time(self) -> int:
-        return time.time() // 1000
-
     def write(self, command: str) -> str:
         '''Sends a command to the server, returning its response.'''
         command = command.strip()
@@ -79,43 +76,48 @@ class ServerManager:
 
     async def _running_loop(self):
         while (self.server_should_be_running()):
-            restart_on_next_loop = False
-            backup_on_next_loop = False
+            time_until_restart = self._get_offset_until(self._autorestart_datetime)
+            time_until_backup = self._get_offset_until(self._backup_datetime)
+            is_autorestarting = False
             while (self.server_thread_running()):
-                time.sleep(10)  # longer delays cause an unreasonable wait between server shutdown and server appearing shut down
+                await asyncio.sleep(5)  # longer causes high delay between server shutdown and server appearing shut down in _server_should_be_running
 
-                # TODO: use a better scheduler, track a last_restart/backup_time and use that
-                if restart_on_next_loop:
-                    self.write("say Restarting now!")
-                    self.server.stop()
-                    restart_on_next_loop = False
-                elif self._do_autorestart:
-                    time_until_autorestart = self._get_offset_until(self._autorestart_datetime)
-                    if time_until_autorestart <= 60:
+                if self._do_autorestart:
+                    new_time_until_restart = self._get_offset_until(self._autorestart_datetime)
+                    if new_time_until_restart > time_until_restart:  # passed timestamp, it's sending next occurrence
+                        self.write("say Restarting now!")
+                        is_autorestarting = True
+                        self.server.stop()
+                    elif new_time_until_restart <= 60 and time_until_restart > 60:
                         self.write("say Restarting in 60 seconds!")
-                        restart_on_next_loop = True
-                    elif time_until_autorestart <= 300:
+                    elif new_time_until_restart <= 300 and time_until_restart > 300:
                         self.write("say Restarting in 5 minutes.")
-                    elif time_until_autorestart <= 900:
+                    elif new_time_until_restart <= 900 and time_until_restart > 900:
                         self.write("say Restarting in 15 minutes.")
+                    time_until_restart = new_time_until_restart
 
-                if backup_on_next_loop:
-                    self.backup_world()
-                    backup_on_next_loop = False
-                elif self._do_backups:
-                    time_until_backup = self._get_offset_until(self._backup_datetime)
-                    if time_until_backup < 60:
+                if self._do_backups:
+                    new_time_until_backup = self._get_offset_until(self._backup_datetime)
+                    if new_time_until_backup > time_until_backup:  # passed timestamp, it's sending next occurrence
                         self.backup_world()
+                    time_until_backup = new_time_until_backup
 
             # clean up after the server closes based on whether or not we need to restart
-            if (self._restart_on_crash and not self._sent_stop_signal):
-                self._update_server_listeners("Manager detected server crash: Restarting.")
+            if is_autorestarting:
+                self._update_server_listeners("Automatically restarting")
+                self._reset_server_startup_vars()
+                await self._spawn_server_thread()
+            elif (self._restart_on_crash and not self._sent_stop_signal):
+                self._update_server_listeners("Manager detected server crash: Restarting")
                 self._reset_server_startup_vars()
                 await self._spawn_server_thread()
             else:
                 self._server_should_be_running = False
                 self._server_thread = None
                 self._monitor_thread = None
+
+    def _get_current_time(self) -> int:
+        return int(time.time())
 
     def _get_offset_until(self, timestamp: str) -> int:
         '''Parse SMTWRFD HHMM timestamp and check how far away it is from now, in seconds.'''
@@ -127,6 +129,7 @@ class ServerManager:
         mins = int(timestamp_parts[1][2:])
         offset += (hour - current_time.hour) * 3600
         offset += (mins - current_time.minute) * 60
+        offset -= current_time.second
         current_day_num = (current_time.weekday() + 1) % 7
         for i in range(14 - current_day_num):  # 14 not 7 because we have to account for wrapping if we skip the one day a week it runs
             # check offset < 0 because we need to skip if we already passed the timestamp on the first day checked (today)
@@ -138,12 +141,13 @@ class ServerManager:
 
     def backup_world(self):
         '''Creates a backup of the world in the backup directory, deleting older backups to maintain max.'''
-        self._update_server_listeners("Backing up world.")
+        self._update_server_listeners("Backing up world")
         # turn off autosaving while doing the backup to prevent conflicts, but server might be off already so try/except
-        try:
-            self.write("save-off")
-        except Exception:
-            pass
+        if self.server.is_ready():
+            try:
+                self.write("save-off")
+            except Exception:
+                pass
         # hacky way to check which backups were created automatically and use the timestamp name
         backup_list = self.list_backups()
         total_backups = 0
@@ -164,14 +168,15 @@ class ServerManager:
         try:
             self._copy_world(world_dir, backup_dir)
         except Exception as e:
-            self._update_server_listeners("Failed to back up world:", f"{e}")
+            self._update_server_listeners(f"Failed to back up world: {e}")
         # turn back on autosaving
         # NOTE: should probably save the initial state of it and set it back to that, rather than forcing it on (config?)
-        try:
-            self.write("save-on")
-        except Exception:
-            pass
-        self._update_server_listeners("Backup completed.")
+        if self.server.is_ready():
+            try:
+                self.write("save-on")
+            except Exception:
+                pass
+        self._update_server_listeners("Backup completed")
 
     def list_backups(self) -> list[str]:
         '''Returns a list of world backups.'''
@@ -218,11 +223,11 @@ class ServerManager:
         self._level_name = config.get("level-name").strip()
         self._motd = config.get("motd").strip()
 
-    def _update_server_listeners(self, *strs):
-        message = ""
-        for str in strs:
-            message += str + " "
-        asyncio.get_running_loop().create_task(self.server._update_listeners(message[:-1]))
+    def _update_server_listeners(self, message: str):
+        timestamp = f"[{datetime.now().strftime('%H:%M:%S')}] [Manager]: "
+        # headache: since the loop gets stuck in monitoring, it couldn't run this task
+        # to fix: make sure that the monitor has an awaitable that lets other tasks go
+        asyncio.get_running_loop().create_task(self.server._update_listeners(timestamp + message))
 
     def reload_configs(self):
         '''Reload the configs from the current config file.'''
@@ -246,7 +251,7 @@ class ServerManager:
 
             config.write()
         except Exception as e:
-            raise RuntimeError("Error reading configs for server:", e)
+            raise RuntimeError(f"Error reading configs for server: {e}")
 
     def uptime(self) -> int:
         '''Get the time the server has been running since it was last started, in seconds.'''

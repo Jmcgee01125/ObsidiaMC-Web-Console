@@ -1,4 +1,4 @@
-from configparser import ConfigParser
+from configparser import ConfigParser, DuplicateSectionError
 from typing import Union
 import os
 
@@ -58,10 +58,20 @@ class ObsidiaConfigParser:
         ------
         The string in the option or default, for the client to parse
         '''
-        value = self._parser.get(section, option, fallback=None)
+        try:
+            value = self._parser.get(section, option, fallback=None)
+        except RuntimeError:  # fallback does not apply to missing sections
+            value = None
         if value == None and return_default:
-            default_value = self._defaults_parser.get(section, option, fallback=None)
+            try:
+                default_value = self._defaults_parser.get(section, option, fallback=None)
+            except RuntimeError:
+                default_value = None
             if default_value != None:
+                try:
+                    self._parser.add_section(section)
+                except DuplicateSectionError:
+                    pass
                 self._parser.set(section, option, default_value)
                 self.write()
             return default_value
