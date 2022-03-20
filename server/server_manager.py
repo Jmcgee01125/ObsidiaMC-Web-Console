@@ -1,6 +1,6 @@
-from turtle import back
 from config.configs import MCPropertiesParser, ObsidiaConfigParser
 from server.server import ServerRunner
+from datetime import datetime
 import threading
 import asyncio
 import shutil
@@ -46,15 +46,13 @@ class ServerManager:
         self.reload_configs()
 
     def _get_current_time(self) -> int:
-        return time.time_ns() // 1000
+        return time.time() // 1000
 
     def write(self, command: str) -> str:
         '''Sends a command to the server, returning its response.'''
         command = command.strip()
         if command == "stop":
             self._sent_stop_signal = True
-        elif command == "obsidiabackup":  # DEBUG
-            self.backup_world()
         self.server.write(command)
 
     async def start_server(self):
@@ -109,6 +107,7 @@ class ServerManager:
                     if time_until_backup < 60:
                         self.backup_world()
 
+            # clean up after the server closes based on whether or not we need to restart
             if (self._restart_on_crash and not self._sent_stop_signal):
                 self._update_server_listeners("Manager detected server crash: Restarting.")
                 self._reset_server_startup_vars()
@@ -118,31 +117,61 @@ class ServerManager:
                 self._server_thread = None
                 self._monitor_thread = None
 
-    def _get_offset_until(self, timestamp: str) -> list[int]:
-        '''Parse SMTWRFD HHMM timestamp and check how far away it is, in seconds.'''
-        # TODO: parse SMTWRFD HHMM to get the time until it
-        return 1000000000
+    def _get_offset_until(self, timestamp: str) -> int:
+        '''Parse SMTWRFD HHMM timestamp and check how far away it is from now, in seconds.'''
+        offset = 0
+        current_time = datetime.now()
+        timestamp_parts = timestamp.split(" ")
+        days = timestamp_parts[0]
+        hour = int(timestamp_parts[1][:2])
+        mins = int(timestamp_parts[1][2:])
+        offset += (hour - current_time.hour) * 3600
+        offset += (mins - current_time.minute) * 60
+        current_day_num = (current_time.weekday() + 1) % 7
+        for i in range(14 - current_day_num):  # 14 not 7 because we have to account for wrapping if we skip the one day a week it runs
+            # check offset < 0 because we need to skip if we already passed the timestamp on the first day checked (today)
+            if "SMTWRFDSMTWRFD"[current_day_num + i] not in days or offset < 0:
+                offset += 86400
+            else:
+                break
+        return offset
 
     def backup_world(self):
         '''Creates a backup of the world in the backup directory, deleting older backups to maintain max.'''
-        self._update_server_listeners("Attempting world backup.")
-        # turn off autosaving while doing the backup to prevent conflicts
+        self._update_server_listeners("Backing up world.")
+        # turn off autosaving while doing the backup to prevent conflicts, but server might be off already so try/except
         try:
             self.write("save-off")
         except Exception:
             pass
-        # TODO: logic for deleting old backups to maintain max (self.list_backups(), delete one with lowest timestamp name)
-        # TODO: if a world does NOT match the standard timestamp name, COMPLETELY IGNORE IT IN ALL CALCULATIONS
+        # hacky way to check which backups were created automatically and use the timestamp name
+        backup_list = self.list_backups()
+        total_backups = 0
+        oldest_backup = 1000000000000000000000  # eh good enough
+        for backup in backup_list:
+            try:
+                backup = int(backup)
+            except:
+                pass
+            else:
+                oldest_backup = min(backup, oldest_backup)
+                total_backups += 1
+        if total_backups >= self._max_backups:
+            self._delete_world(os.path.join(self._backup_directory, f"{oldest_backup}"))
+        # alright, now we can backup
         world_dir = os.path.join(self.server_directory, self._level_name)
         backup_dir = os.path.join(self._backup_directory, f"{self._get_current_time()}")
         try:
             self._copy_world(world_dir, backup_dir)
         except Exception as e:
             self._update_server_listeners("Failed to back up world:", f"{e}")
+        # turn back on autosaving
+        # NOTE: should probably save the initial state of it and set it back to that, rather than forcing it on (config?)
         try:
             self.write("save-on")
         except Exception:
             pass
+        self._update_server_listeners("Backup completed.")
 
     def list_backups(self) -> list[str]:
         '''Returns a list of world backups.'''
@@ -198,7 +227,7 @@ class ServerManager:
     def reload_configs(self):
         '''Reload the configs from the current config file.'''
         config = ObsidiaConfigParser(os.path.join(self.server_directory, self.config_file))
-        # NOTE: the config items could be None or invaid in some cases, but crashing is fine in these circumstances
+        # NOTE: the config items could be None or invalid in some cases, but crashing is fine in these circumstances
         try:
             self._server_jar = config.get("Server Information", "server_jar").strip()
             self._server_name = config.get("Server Information", "server_name").strip()
