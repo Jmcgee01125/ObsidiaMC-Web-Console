@@ -45,8 +45,8 @@ class ServerManager:
         self._load_server_information()
         self.reload_configs()
 
-    def write(self, command: str) -> str:
-        '''Sends a command to the server, returning its response.'''
+    def write(self, command: str):
+        '''Sends a command to the server.'''
         command = command.strip()
         if command == "stop":
             self._sent_stop_signal = True
@@ -61,11 +61,11 @@ class ServerManager:
 
     async def _spawn_server_thread(self):
         self._server_start_time = self._get_current_time()
-        self._server_thread = threading.Thread(target=self._asynced_server_start)
+        self._server_thread = threading.Thread(target=self._asynced_server_start, name="server thread")
         self._server_thread.start()
 
     async def _spawn_monitor_thread(self):
-        self._monitor_thread = threading.Thread(target=self._asynced_running_loop_start)
+        self._monitor_thread = threading.Thread(target=self._asynced_running_loop_start, name="monitor thread")
         self._monitor_thread.start()
 
     def _asynced_server_start(self):
@@ -107,14 +107,12 @@ class ServerManager:
                 self._update_server_listeners("Automatically restarting")
                 self._reset_server_startup_vars()
                 await self._spawn_server_thread()
-            elif (self._restart_on_crash and not self._sent_stop_signal):
-                self._update_server_listeners("Manager detected server crash: Restarting")
+            elif self._restart_on_crash and not self._sent_stop_signal:
+                self._update_server_listeners("Detected server crash: Restarting")
                 self._reset_server_startup_vars()
                 await self._spawn_server_thread()
             else:
                 self._server_should_be_running = False
-                self._server_thread = None
-                self._monitor_thread = None
 
     def _get_current_time(self) -> int:
         return int(time.time())

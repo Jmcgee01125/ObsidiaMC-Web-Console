@@ -73,9 +73,11 @@ def logout():
 
 
 def start():
+    print("Web console coming online.")
+
     if online:
         app.run(host="0.0.0.0", port=web_port)
     else:
         app.run(port=web_port)
 
-    print("Site shutting down.")
+    print("Web console offline.")

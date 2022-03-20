@@ -23,7 +23,7 @@ class DebugPrintListener:
         print("DebugPrintListener closing")
 
 
-class ServerHolder:
+class ServerHandler:
     def __init__(self, server_directory: str):
         self.server_directory = server_directory
         self.manager: ServerManager = None
@@ -35,13 +35,25 @@ class ServerHolder:
 
 if __name__ == "__main__":
     server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
-    holders: set[ServerHolder] = set()
+    handlers: set[ServerHandler] = set()
     for folder in os.listdir(server_dir):
         path = os.path.join(server_dir, folder)
         if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
-            holders.add(ServerHolder(path))
+            handlers.add(ServerHandler(path))
 
-    for holder in holders:
-        asyncio.run(holder.start_server())
+    for handler in handlers:
+        asyncio.run(handler.start_server())
 
     website.start()
+
+    # ctrl-c in the console, shut down all servers
+    print("Received interrupt, shutting down all servers.")
+    for handler in handlers:
+        handler.manager.write("stop")
+
+    print("Waiting for latent threads to close.")
+    for thread in threading.enumerate():
+        if thread != threading.current_thread():
+            thread.join()
+
+    print("Shutting down main.")
