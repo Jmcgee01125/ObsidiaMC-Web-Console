@@ -80,12 +80,13 @@ class ServerManager:
         asyncio.run(self._running_loop())
 
     async def _running_loop(self):
-        while (self._server_should_be_running):
+        while (self.server_should_be_running()):
             restart_on_next_loop = False
             backup_on_next_loop = False
             while (self.server_thread_running()):
                 time.sleep(10)  # longer delays cause an unreasonable wait between server shutdown and server appearing shut down
 
+                # TODO: use a better scheduler, track a last_restart/backup_time and use that
                 if restart_on_next_loop:
                     self.write("say Restarting now!")
                     self.server.stop()
@@ -131,10 +132,11 @@ class ServerManager:
         except Exception:
             pass
         # TODO: logic for deleting old backups to maintain max (self.list_backups(), delete one with lowest timestamp name)
+        # TODO: if a world does NOT match the standard timestamp name, COMPLETELY IGNORE IT IN ALL CALCULATIONS
         world_dir = os.path.join(self.server_directory, self._level_name)
         backup_dir = os.path.join(self._backup_directory, f"{self._get_current_time()}")
         try:
-            shutil.copytree(world_dir, backup_dir, ignore=shutil.ignore_patterns("*.lock"))
+            self._copy_world(world_dir, backup_dir)
         except Exception as e:
             self._update_server_listeners("Failed to back up world:", f"{e}")
         try:
@@ -143,18 +145,32 @@ class ServerManager:
             pass
 
     def list_backups(self) -> list[str]:
-        '''Returns a list of the timestamps of each backup.'''
-        # TODO
-        pass
+        '''Returns a list of world backups.'''
+        return os.listdir(self._backup_directory)
 
     def restore_backup(self, backup: str):
         '''
         Restores a backup from a specified timestamp.
 
         Fails if the server is currently running, or if the specified backup does not exist.
+        (Note that only the existance of the directory pointed to is checked. It may be empty.)
         '''
-        # TODO
-        pass
+        if self.server_should_be_running():
+            raise RuntimeError("Cannot restore backup while server is running.")
+        backup_list = self.list_backups()
+        if backup in backup_list:
+            world_dir = os.path.join(self.server_directory, self._level_name)
+            backup_dir = os.path.join(self._backup_directory, backup)
+            self._delete_world(world_dir)
+            self._copy_world(backup_dir, world_dir)
+        else:
+            raise FileNotFoundError("Specified backup does not exist.")
+
+    def _copy_world(self, source, destination):
+        shutil.copytree(source, destination, ignore=shutil.ignore_patterns("*.lock"))
+
+    def _delete_world(self, world):
+        shutil.rmtree(world)
 
     def server_should_be_running(self) -> bool:
         '''Returns true if the server should be running (but might be restarting), false otherwise.'''
