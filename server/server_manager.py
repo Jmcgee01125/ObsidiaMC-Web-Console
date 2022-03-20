@@ -148,20 +148,21 @@ class ServerManager:
                 self.write("save-off")
             except Exception:
                 pass
-        # hacky way to check which backups were created automatically and use the timestamp name
-        backup_list = self.list_backups()
-        total_backups = 0
-        oldest_backup = 1000000000000000000000  # eh good enough
-        for backup in backup_list:
-            try:
-                backup = int(backup)
-            except:
-                pass
-            else:
-                oldest_backup = min(backup, oldest_backup)
-                total_backups += 1
-        if total_backups >= self._max_backups:
-            self._delete_world(os.path.join(self._backup_directory, f"{oldest_backup}"))
+        if self._max_backups > 0:
+            # hacky way to check which backups were created automatically and use the timestamp name
+            backup_list = self.list_backups()
+            total_backups = 0
+            oldest_backup = 1000000000000000000000  # eh good enough
+            for backup in backup_list:
+                try:
+                    backup = int(backup)
+                except:
+                    pass
+                else:
+                    oldest_backup = min(backup, oldest_backup)
+                    total_backups += 1
+            if total_backups >= self._max_backups:
+                self._delete_world(os.path.join(self._backup_directory, f"{oldest_backup}"))
         # alright, now we can backup
         world_dir = os.path.join(self.server_directory, self._level_name)
         backup_dir = os.path.join(self._backup_directory, f"{self._get_current_time()}")

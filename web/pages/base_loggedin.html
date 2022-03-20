@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block banner %}
+<div class="banner" style="display: inline">
+    <span style="display:inline-block">{% block banner_logout %}{% endblock %}</span>
+    <input class="Logout button color-main" type="button" value="Logout" onclick="location.href='/logout'"
+        style="float:inline-end">
+</div>
+{% endblock %}

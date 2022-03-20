@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block banner %}{% endblock %}
+{% block content %}
+<div class="login shadow center" style="width:fit-content; margin:0 auto">
+    <p class="banner container color-main center">Login</p>
+    <div class="describe text-main text-center" style="padding-left:10em; padding-right:10em">Enter admin password to
+        view servers.
+    </div>
+    <div style="padding-left:10em; padding-right:10em">
+        <form action="/verify" class="container" method="post">
+            <input type="hidden" name="password_entry" />
+            <p id="secret" class="code"><input class="input animate-input center" placeholder="Password" name="password"
+                    type="password"></p>
+            <button type="submit" class="button color-main center">Submit</button>
+            <p>{% with messages = get_flashed_messages() %}
+                {% if messages %}
+                {% for message in messages %}
+                {{ message }}
+                {% endfor %}
+                {% endif %}
+                {% endwith %}</p>
+        </form>
+    </div>
+</div>
+{% endblock %}

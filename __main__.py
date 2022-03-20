@@ -1,15 +1,16 @@
 from server.server_manager import ServerManager
 from server.server import ServerListener
 from dotenv import load_dotenv
+from web import website
 import threading
 import asyncio
 import os
 
 
-# TODO: web interface (web2py?) with uptime, playercount + names (mctools?), editable config, and of course a console
+# TODO: web interface with uptime, playercount + names (mctools?), editable config, and of course a console
 # TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
 
-# TODO: create a guide for each option, such as using 0 to disable maximum backups or how SMTWRFD works
+# TODO: create a guide for each option, such as using <=0 to disable maximum backups or how SMTWRFD HHMM works
 
 # TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
 load_dotenv()
@@ -54,4 +55,5 @@ async def queue_initial_actions():
 
 
 if __name__ == "__main__":
-    asyncio.run(queue_initial_actions())
+    # asyncio.run(queue_initial_actions())
+    website.start()
