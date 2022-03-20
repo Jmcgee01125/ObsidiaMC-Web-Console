@@ -46,7 +46,7 @@ class ServerRunner:
     async def start(self):
         '''Start the server process if not already started.'''
         if (self._server == None or not self.is_active()):
-            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
+            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + [""],  # DEBUG: -nogui removed
                                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
             await self._listen_for_logs()
 
@@ -176,7 +176,7 @@ class ServerListener:
         if (self._message_queue.empty()):
             return None
         else:
-            # NOTE: it's possible to pass an empty check but not have an item, this causes a block until an item is added (hence timeout w/ try)
+            # it's possible to pass an empty check but not have an item, this causes a block until an item is added (hence timeout w/ try)
             try:
                 return self._message_queue.get(timeout=1)
             except queue.Empty:

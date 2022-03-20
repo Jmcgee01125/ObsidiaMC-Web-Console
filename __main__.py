@@ -1,59 +1,47 @@
 from server.server_manager import ServerManager
+from config.configs import ObsidiaConfigParser
 from server.server import ServerListener
-from dotenv import load_dotenv
 from web import website
 import threading
 import asyncio
+import glob
 import os
 
 
-# TODO: web interface with uptime, playercount + names (mctools?), editable config, and of course a console
-# TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
-
-# TODO: create a guide for each option, such as using <=0 to disable maximum backups or how SMTWRFD HHMM works
-
-# TODO: iterate over a SERVERS_DIR to get subfolder names of potential servers, then check them to make sure they are servers
-load_dotenv()
-server_dir = os.getenv("SERVER_DIR")
-
-
 class DebugPrintListener:
-    def __init__(self, server_listener: ServerListener):
-        self._server_listener = server_listener
+    def __init__(self, listener: ServerListener, manager: ServerManager):
+        self._listener = listener
+        self._manager = manager
 
     def start(self):
         threading.Thread(target=self._print_queue).start()
 
     def _print_queue(self):
-        while (manager.server_should_be_running()):
-            if (self._server_listener.has_next()):
-                print(self._server_listener.next())
+        while (self._manager.server_should_be_running()):
+            if (self._listener.has_next()):
+                print(self._listener.next())
         print("DebugPrintListener closing")
 
 
-async def start_server():
-    global manager
-    manager = ServerManager(server_dir)
-    await manager.start_server()
+class ServerHolder:
+    def __init__(self, server_directory: str):
+        self.server_directory = server_directory
+        self.manager: ServerManager = None
 
-
-async def watch_user_input():
-    while (manager.server_should_be_running()):
-        command = input()
-        manager.write(command.strip())
-
-
-async def debug_listen_to_server():
-    listener = ServerListener(manager.server)
-    DebugPrintListener(listener).start()
-
-
-async def queue_initial_actions():
-    await start_server()
-    await debug_listen_to_server()
-    await watch_user_input()
+    async def start_server(self):
+        self.manager = ServerManager(self.server_directory)
+        await self.manager.start_server()
 
 
 if __name__ == "__main__":
-    # asyncio.run(queue_initial_actions())
+    server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
+    holders: set[ServerHolder] = set()
+    for folder in os.listdir(server_dir):
+        path = os.path.join(server_dir, folder)
+        if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
+            holders.add(ServerHolder(path))
+
+    for holder in holders:
+        asyncio.run(holder.start_server())
+
     website.start()

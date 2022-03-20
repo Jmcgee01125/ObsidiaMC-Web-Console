@@ -33,7 +33,7 @@ class Login():
 
 @app.route("/")
 def homepage():
-    return render_template("home.html")
+    return redirect("/login")
 
 
 @app.route("/admin")
