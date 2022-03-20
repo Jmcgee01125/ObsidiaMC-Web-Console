@@ -7,7 +7,6 @@ import os
 
 
 # TODO: web interface (web2py?) with uptime, playercount + names (mctools?), editable config, and of course a console
-# TODO: also don't forget a way to restore backups (while server is offline)
 
 # TODO: password challenge based on password set in master config, which should have other options (meta-server and UI stuff like colors)
 
@@ -40,7 +39,7 @@ async def start_server():
 
 async def watch_user_input():
     while (manager.server_should_be_running()):
-        command = await asyncio.get_running_loop().run_in_executor(None, input)
+        command = input()
         manager.write(command.strip())
 
 

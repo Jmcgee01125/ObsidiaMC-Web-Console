@@ -80,11 +80,11 @@ class ServerManager:
         asyncio.run(self._running_loop())
 
     async def _running_loop(self):
-        while (True):
+        while (self._server_should_be_running):
             restart_on_next_loop = False
             backup_on_next_loop = False
             while (self.server_thread_running()):
-                time.sleep(60)
+                time.sleep(10)  # longer delays cause an unreasonable wait between server shutdown and server appearing shut down
 
                 if restart_on_next_loop:
                     self.write("say Restarting now!")
@@ -116,7 +116,6 @@ class ServerManager:
                 self._server_should_be_running = False
                 self._server_thread = None
                 self._monitor_thread = None
-                break
 
     def _get_offset_until(self, timestamp: str) -> list[int]:
         '''Parse SMTWRFD HHMM timestamp and check how far away it is, in seconds.'''
@@ -126,12 +125,11 @@ class ServerManager:
     def backup_world(self):
         '''Creates a backup of the world in the backup directory, deleting older backups to maintain max.'''
         self._update_server_listeners("Attempting world backup.")
-
+        # turn off autosaving while doing the backup to prevent conflicts
         try:
             self.write("save-off")
         except Exception:
             pass
-
         # TODO: logic for deleting old backups to maintain max (self.list_backups(), delete one with lowest timestamp name)
         world_dir = os.path.join(self.server_directory, self._level_name)
         backup_dir = os.path.join(self._backup_directory, f"{self._get_current_time()}")
@@ -139,7 +137,6 @@ class ServerManager:
             shutil.copytree(world_dir, backup_dir, ignore=shutil.ignore_patterns("*.lock"))
         except Exception as e:
             self._update_server_listeners("Failed to back up world:", f"{e}")
-
         try:
             self.write("save-on")
         except Exception:

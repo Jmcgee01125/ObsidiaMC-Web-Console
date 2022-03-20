@@ -28,7 +28,7 @@ class ServerRunner:
     '''
 
     def __init__(self, server_directory: str, server_name: str = None, jarname: str = "server.jar", args: list[str] = []):
-        self._is_started = False
+        self._is_ready = False
         self.server_directory = os.path.abspath(server_directory)
         if (server_name == None):
             self.server_name = os.path.basename(server_directory)
@@ -54,22 +54,22 @@ class ServerRunner:
         '''
         Monitors stdout for logs, reporting them to listeners.
 
-        This function should only be called once per process.
+        This function should only be called once per server thread.
         '''
         while (self.is_active()):
             line = self._server.stdout.readline().decode().strip()
             await self._update_listeners(line)
-            await self._check_if_started(line)
+            if not self._is_ready:
+                await self._check_if_ready(line)
         # process is dead
-        self._is_started = False
+        self._is_ready = False
         self._server = None
 
-    async def _check_if_started(self, msg: str):
-        if not self._is_started:
-            if "INFO]: Done (" in msg:
-                self._is_started = True
-            elif "INFO]: You need to agree to the EULA" in msg:
-                self.kill()
+    async def _check_if_ready(self, msg: str):
+        if "INFO]: Done (" in msg:
+            self._is_ready = True
+        elif "INFO]: You need to agree to the EULA" in msg:
+            self.kill()
 
     async def _update_listeners(self, msg: str):
         for listener in self._listeners:
@@ -83,10 +83,22 @@ class ServerRunner:
         '''
         try:
             listener_object.update(f"Subscribed to logs for {self.server_name}.")
-        except Exception:
+        except AttributeError:
             raise AttributeError("Listener does not contain update(message: str) attribute.")
         else:
             self._listeners.add(listener_object)
+
+    def remove_listener(self, listener_object):
+        '''Unsubscribes an object from updates.'''
+        try:
+            self._listeners.remove(listener_object)
+        except KeyError:
+            pass
+        else:
+            try:
+                listener_object.update(f"Unsubscribed from logs for {self.server_name}.")
+            except AttributeError:
+                raise AttributeError("Listener does not contain update(message: str) attribute.")
 
     def is_active(self) -> bool:
         '''Check if the server's thread is currently active (not necessarily that the server is running).'''
@@ -94,7 +106,7 @@ class ServerRunner:
 
     def is_ready(self) -> bool:
         '''Check if the server is currently started, i.e. players are able to join.'''
-        return self._is_started
+        return self._is_ready
 
     def write(self, command: str):
         '''Write a single line command to the server console. Newline automatically appended.'''
@@ -120,17 +132,18 @@ class ServerRunner:
         except Exception as e:
             print("Stop command failed:", e)
         finally:
-            self._is_started = False
+            self._is_ready = False
 
     def kill(self):
         '''Kills the server process. DO NOT RUN THIS UNLESS YOU ABSOLUTELY HAVE TO.'''
         self._server.kill()
-        self._is_started = False
+        self._is_ready = False
 
 
 class ServerListener:
     '''
-    Listens to a given server and creates a queue that can be queried for messages
+    Listens to a given server and creates a queue that can be queried for messages.
+    Automatically subscribes to the server passed as parameter.
 
     Parameters
     ----------
@@ -141,7 +154,15 @@ class ServerListener:
     def __init__(self, server: ServerRunner):
         self._server = server
         self._message_queue = queue.Queue()
+        self.subscribe()
+
+    def subscribe(self):
+        '''Subscribes this listener to the server passed in __init__.'''
         self._server.add_listener(self)
+
+    def unsubscribe(self):
+        '''Unsubscribes from the server's listener pool.'''
+        self._server.remove_listener(self)
 
     def update(self, message: str):
         self._message_queue.put(message)
