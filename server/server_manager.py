@@ -50,7 +50,13 @@ class ServerManager:
         command = command.strip()
         if command == "stop":
             self._sent_stop_signal = True
-        self.server.write(command)
+            self.server.stop()
+        else:
+            self.server.write(command)
+
+    def stop_server(self):
+        '''Sends a stop command to the server.'''
+        self.write("stop")
 
     async def start_server(self):
         '''Creates a new thread to run the server in and a thread to monitor it for crashing/backups/etc.'''
@@ -61,11 +67,11 @@ class ServerManager:
 
     async def _spawn_server_thread(self):
         self._server_start_time = self._get_current_time()
-        self._server_thread = threading.Thread(target=self._asynced_server_start, name="server thread")
+        self._server_thread = threading.Thread(target=self._asynced_server_start, name=f"ServerThread")
         self._server_thread.start()
 
     async def _spawn_monitor_thread(self):
-        self._monitor_thread = threading.Thread(target=self._asynced_running_loop_start, name="monitor thread")
+        self._monitor_thread = threading.Thread(target=self._asynced_running_loop_start, name=f"MonitorThread")
         self._monitor_thread.start()
 
     def _asynced_server_start(self):

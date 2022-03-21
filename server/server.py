@@ -46,7 +46,7 @@ class ServerRunner:
     async def start(self):
         '''Start the server process if not already started.'''
         if (self._server == None or not self.is_active()):
-            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + [""],  # DEBUG: -nogui removed
+            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
                                             stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
             await self._listen_for_logs()
 
@@ -132,7 +132,7 @@ class ServerRunner:
         '''Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon).'''
         try:
             self._server.stdin.flush()
-            self._server.communicate(b"stop\n")  # should kill process
+            self._server.communicate(b"stop\n", timeout=5)  # should kill process
         except Exception as e:
             print("Stop command failed:", e)
         finally:

@@ -47,13 +47,13 @@ if __name__ == "__main__":
     website.start()
 
     # ctrl-c in the console, shut down all servers
-    print("Received interrupt, shutting down all servers.")
     for handler in handlers:
-        handler.manager.write("stop")
+        handler.manager.stop_server()
 
     print("Waiting for latent threads to close.")
     for thread in threading.enumerate():
         if thread != threading.current_thread():
+            print(f"Waiting for {thread.getName()}.")
             thread.join()
 
     print("Shutting down main.")
