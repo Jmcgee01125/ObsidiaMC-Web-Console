@@ -34,7 +34,9 @@ class ServerHandler:
 
 
 if __name__ == "__main__":
-    server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
+    website.start()
+    # DEBUG: below is the real one
+    '''server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
     handlers: set[ServerHandler] = set()
     for folder in os.listdir(server_dir):
         path = os.path.join(server_dir, folder)
@@ -56,4 +58,4 @@ if __name__ == "__main__":
             print(f"Waiting for {thread.getName()}.")
             thread.join()
 
-    print("Shutting down main.")
+    print("Shutting down main.")'''

@@ -73,4 +73,4 @@ PLEASE change from the default value.
 
 directory
 The directory where servers are located.
-Directories from root/C/whatever are recommended.
+Directories from root/C/whatever are recommended, but not required (relative to the cwd of the web console).

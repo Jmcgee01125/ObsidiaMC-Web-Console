@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block banner %}{% endblock %}
 {% block content %}
-<div class="login shadow center" style="width:fit-content; margin:0 auto">
-    <p class="banner container color-main center">Web Console Login</p>
+<div class="center shadow rounded color-secondary" style="width:fit-content; margin:0 auto">
+    <p class="header container color-main center rounded-top-small">Web Console Login</p>
     <div class="describe text-main text-center" style="padding-left:10em; padding-right:10em">Enter admin password to
-        view servers.
+        view servers
     </div>
-    <div style="padding-left:10em; padding-right:10em">
+    <div style="padding-left:10em; padding-right:10em; ">
         <form action="/verify" class="container" method="post">
             <input type="hidden" name="password_entry" />
             <p id="secret" class="code"><input class="input animate-input center" placeholder="Password" name="password"

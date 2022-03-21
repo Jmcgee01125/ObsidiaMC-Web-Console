@@ -36,20 +36,58 @@ def homepage():
     return redirect("/login")
 
 
-@app.route("/admin")
-def admin():
+@app.route("/serverlist")
+def serverlist():
     if not Login.check_login(session):
         abort(404)
     else:
-        return render_template("admin.html")
+        return render_template("serverlist.html")
+
+
+@app.route("/selectserver", methods=["GET", "POST"])
+def selectserver():
+    if request.method == "POST":
+        session["serverselection"] = request.form.get("serverselection")
+        return redirect("/server")
+    else:
+        return redirect("/serverlist")
+
+
+@app.route("/server")
+def server():
+    if not Login.check_login(session):
+        abort(404)
+    elif "serverselection" not in session:
+        return redirect("/serverlist")
+    else:
+        return render_template("server.html")
+
+
+def get_server_info() -> str:
+    # TODO: turn this into a function or group of functions that server.html can use to build itself
+    return session["serverselection"]
+
+
+def get_server_list() -> list[str]:
+    return ["server1", "server2", "server3"]
+
+
+app.jinja_env.globals.update(get_server_info=get_server_info)
+app.jinja_env.globals.update(get_server_list=get_server_list)
 
 
 @app.route("/login")
 def login():
     if Login.check_login(session):
-        return redirect("/admin")
+        return redirect("/serverlist")
     else:
         return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+    Login.log_out_user(session)
+    return redirect("/")
 
 
 @app.route("/verify", methods=["GET", "POST"])
@@ -58,18 +96,12 @@ def verify():
         password = request.form.get("password", default="")
         if password == server_password:
             Login.log_in_user(session)
-            return redirect("/admin")
+            return redirect("/serverlist")
         else:
             flash("Invalid password.")
             return redirect("/login")
     else:
         return redirect("/login")
-
-
-@app.route("/logout")
-def logout():
-    Login.log_out_user(session)
-    return redirect("/")
 
 
 def start():
