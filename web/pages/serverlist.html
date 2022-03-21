@@ -1,9 +1,8 @@
 {% extends "base_loggedin.html" %}
-{% block banner_logout %}{% endblock %}
 {% block content %}
 <div class="center shadow rounded color-secondary" style="width:fit-content; margin:0 auto">
     <p class="header container color-main center rounded-top-small">Server List</p>
-    <div class="describe text-main text-center" style="padding-left:10em; padding-right:10em">Select server to manage
+    <div class="describe center" style="padding-left:10em; padding-right:10em">Select server to manage
     </div>
     <div style="padding:2em; padding-left:10em; padding-right:10em">
         <form action="/selectserver" method="post">

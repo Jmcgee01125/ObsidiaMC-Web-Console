@@ -120,19 +120,15 @@ class ServerRunner:
         except Exception as e:
             print("Write failed:", e)
 
-    def get_full_log(self) -> list[str]:
-        '''Get a list of all console logs for the current server session.'''
-        try:
-            log_file = open(os.path.join(self.server_directory, "logs", "latest.log"), "r")
-        except IOError:
-            return "No latest log found."
-        return log_file.readlines()
-
     def stop(self):
-        '''Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon).'''
+        '''
+        Stop the server, ALWAYS call this before closing the server (unless you've sent stop via rcon).
+
+        Note that is_restarting only changes the message that users see, and does not actually restart.
+        '''
         try:
             self._server.stdin.flush()
-            self._server.communicate(b"stop\n", timeout=5)  # should kill process
+            self._server.communicate(b"stop\n", timeout=5)
         except Exception as e:
             print("Stop command failed:", e)
         finally:

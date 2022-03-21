@@ -1,8 +1,32 @@
 {% extends "base_loggedin.html" %}
-{% block banner_logout %}{% endblock %}
 {% block content %}
-<p>
-    Server page under construction.
-    You chose {{ get_server_info() }}
-</p>
+<div class="center shadow rounded color-secondary" style="width:70%; margin:0; float:left">
+    <p class="header container color-main center rounded-top-small" style="margin:0">Console</p>
+    <div style="height:80vh; overflow-y:auto">
+        <div id="consolebox" class="describe"
+            style="padding-top:0; padding-bottom:0; padding-left:2em; padding-right:2em; text-align:start">
+            {% with logs = get_server_log() %}
+            {% for log in logs %}
+            <p>{{ log }}</p>
+            {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
+    <script>
+        document.getElementById("consolebox").lastElementChild.scrollIntoView(); // TODO: move this into a callable object for when the listener runs
+    </script>
+    <div class="border-top" style="padding-top:1em; padding:2em; white-space:nowrap">
+        <input id="commandentry" name="commandentry" class="input" placeholder="Enter command" type="text"
+            style="width:80%; display:inline-block"></input>
+        <button id="commandbutton" type="button" class="button color-main center"
+            style="margin-left:2em; display:inline-block">Send</button>
+    </div>
+</div>
+
+<div class="center shadow rounded color-secondary" style="width:29%; margin:0; float:right">
+    <p class="header container color-main center rounded-top-small" style="margin:0">Settings</p>
+    <div style="height:80vh; overflow-y:auto">
+        TODO: put settings here lol, maybe a two-column layout (and don't forget save button)
+    </div>
+</div>
 {% endblock %}

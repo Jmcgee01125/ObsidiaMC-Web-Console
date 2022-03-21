@@ -8,7 +8,7 @@ Some versions, like fabric, may use alternates.
 server_name
 The name of the server as it should appear in interfaces.
 This has no effect on the server itself.
-If left blank, the MOTD of the server is used instead.
+If left blank, the directory of the server is used instead.
 
 args
 Server startup arguments, like setting the amount of RAM.

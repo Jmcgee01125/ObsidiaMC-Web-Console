@@ -52,20 +52,31 @@ html, body {
     width: 100%;
 }
 
+.input:focus {
+    outline: none;
+}
+
+.border-top {
+    border-style: solid;
+    border-color: #1e1e1e !important;
+    border-right: 0;
+    border-left: 0;
+    border-bottom: 0;
+}
+
 .header {
     font-size: x-large;
 }
 
+.page-footer {
+    position: fixed;
+    bottom: 1em;
+    left: 1em;
+    right: 1em;
+}
+
 .title {
     font-size: larger;
-}
-
-.animate-input {
-    transition: width 0.4s ease-in-out;
-}
-
-.animate-input:focus {
-    width: 100% !important;
 }
 
 .center {

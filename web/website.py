@@ -1,4 +1,5 @@
 from flask import Flask, abort, flash, redirect, render_template, session, request
+from server.server_manager import ServerManager
 from config.configs import ObsidiaConfigParser
 import uuid
 import os
@@ -63,16 +64,33 @@ def server():
         return render_template("server.html")
 
 
+@app.errorhandler(404)
+def error_404(error):
+    return redirect("/")
+
+
+def get_manager(server_name: str) -> ServerManager:
+    for server in server_handlers:
+        if server.__str__() == server_name:
+            return server.manager
+
+
 def get_server_info() -> str:
     # TODO: turn this into a function or group of functions that server.html can use to build itself
     return session["serverselection"]
 
 
-def get_server_list() -> list[str]:
-    return ["server1", "server2", "server3"]
+def get_server_log() -> list[str]:
+    manager = get_manager(session["serverselection"])
+    return manager.get_latest_log()
+
+
+def get_server_list() -> set[ServerManager]:
+    return server_handlers
 
 
 app.jinja_env.globals.update(get_server_info=get_server_info)
+app.jinja_env.globals.update(get_server_log=get_server_log)
 app.jinja_env.globals.update(get_server_list=get_server_list)
 
 
@@ -98,13 +116,15 @@ def verify():
             Login.log_in_user(session)
             return redirect("/serverlist")
         else:
-            flash("Invalid password.")
+            flash("Invalid password")
             return redirect("/login")
     else:
         return redirect("/login")
 
 
-def start():
+def start(handlers):
+    global server_handlers
+    server_handlers = handlers
     print("Web console coming online.")
 
     if online:

@@ -42,6 +42,7 @@ class ServerManager:
     def _reset_server_startup_vars(self):
         '''Initial vars are those that need to be reset every time the server is launched, NOT threads or the like.'''
         self._sent_stop_signal = False
+        self._is_autorestarting = False
         self._load_server_information()
         self.reload_configs()
 
@@ -56,12 +57,18 @@ class ServerManager:
 
     def stop_server(self):
         '''Sends a stop command to the server.'''
-        self.write("stop")
+        self._sent_stop_signal = True
+        self.server.stop()
+
+    def restart_server(self):
+        '''Sends a stop command to the server, but restarts.'''
+        self._is_autorestarting = True
+        self.server.stop()
 
     async def start_server(self):
         '''Creates a new thread to run the server in and a thread to monitor it for crashing/backups/etc.'''
         self._server_should_be_running = True
-        self.server = ServerRunner(self.server_directory, server_name=self._motd, jarname=self._server_jar, args=self._args)
+        self.server = ServerRunner(self.server_directory, server_name=self.get_name(), jarname=self._server_jar, args=self._args)
         await self._spawn_server_thread()
         await self._spawn_monitor_thread()
 
@@ -84,7 +91,6 @@ class ServerManager:
         while (self.server_should_be_running()):
             time_until_restart = self._get_offset_until(self._autorestart_datetime)
             time_until_backup = self._get_offset_until(self._backup_datetime)
-            is_autorestarting = False
             while (self.server_thread_running()):
                 await asyncio.sleep(5)  # longer causes high delay between server shutdown and server appearing shut down in _server_should_be_running
 
@@ -92,7 +98,7 @@ class ServerManager:
                     new_time_until_restart = self._get_offset_until(self._autorestart_datetime)
                     if new_time_until_restart > time_until_restart:  # passed timestamp, it's sending next occurrence
                         self.write("say Restarting now!")
-                        is_autorestarting = True
+                        self._is_autorestarting = True
                         self.server.stop()
                     elif new_time_until_restart <= 60 and time_until_restart > 60:
                         self.write("say Restarting in 60 seconds!")
@@ -109,7 +115,7 @@ class ServerManager:
                     time_until_backup = new_time_until_backup
 
             # clean up after the server closes based on whether or not we need to restart
-            if is_autorestarting:
+            if self._is_autorestarting:
                 self._update_server_listeners("Automatically restarting")
                 self._reset_server_startup_vars()
                 await self._spawn_server_thread()
@@ -263,3 +269,18 @@ class ServerManager:
         if (self.server_thread_running()):
             return self._get_current_time() - self._server_start_time
         return 0
+
+    def get_name(self) -> str:
+        '''Get the name of the server in use.'''
+        if self._server_name != None:
+            return self._server_name
+        else:
+            return os.path.basename(self.server_directory)
+
+    def get_latest_log(self) -> list[str]:
+        '''Get a list of all console logs for the latest server session.'''
+        try:
+            log_file = open(os.path.join(self.server_directory, "logs", "latest.log"), "r")
+        except IOError:
+            return "No latest log found."
+        return log_file.readlines()

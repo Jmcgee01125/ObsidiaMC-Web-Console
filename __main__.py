@@ -26,31 +26,34 @@ class DebugPrintListener:
 class ServerHandler:
     def __init__(self, server_directory: str):
         self.server_directory = server_directory
-        self.manager: ServerManager = None
+        self.manager: ServerManager = ServerManager(self.server_directory)
 
     async def start_server(self):
-        self.manager = ServerManager(self.server_directory)
         await self.manager.start_server()
+
+    def __str__(self):
+        return self.manager.get_name()
 
 
 if __name__ == "__main__":
-    website.start()
-    # DEBUG: below is the real one
-    '''server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
-    handlers: set[ServerHandler] = set()
+    server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
+    server_handlers: set[ServerHandler] = set()
     for folder in os.listdir(server_dir):
         path = os.path.join(server_dir, folder)
         if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
-            handlers.add(ServerHandler(path))
+            server_handlers.add(ServerHandler(path))
 
-    for handler in handlers:
-        asyncio.run(handler.start_server())
+    for handler in server_handlers:
+        # asyncio.run(handler.start_server())
+        pass  # DEBUG: disabled
 
-    website.start()
+    website.start(server_handlers)
 
     # ctrl-c in the console, shut down all servers
-    for handler in handlers:
-        handler.manager.stop_server()
+    # the servers seem to grab ctrl C and shut down themselves, so these should fail
+    for handler in server_handlers:
+        # handler.manager.stop_server()
+        pass  # DEBUG: disabled
 
     print("Waiting for latent threads to close.")
     for thread in threading.enumerate():
@@ -58,4 +61,4 @@ if __name__ == "__main__":
             print(f"Waiting for {thread.getName()}.")
             thread.join()
 
-    print("Shutting down main.")'''
+    print("Shutting down main.")
