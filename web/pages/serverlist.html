@@ -1,10 +1,11 @@
-{% extends "base_loggedin.html" %}
+{% extends "base.html" %}
 {% block content %}
+{% include "logout_footer.html" %}
 <div class="center shadow rounded color-secondary" style="width:fit-content; margin:0 auto">
     <p class="header container color-main center rounded-top-small">Server List</p>
-    <div class="describe center" style="padding-left:10em; padding-right:10em">Select server to manage
+    <div class="describe center" style="padding-left:2em; padding-right:2em">Select server to manage
     </div>
-    <div style="padding:2em; padding-left:10em; padding-right:10em">
+    <div style="padding:2em; padding-left:4em; padding-right:4em">
         <form action="/selectserver" method="post">
             <select name="serverselection" id="serverselection" class="color-secondary shadow">
                 {% with servers = get_server_list() %}

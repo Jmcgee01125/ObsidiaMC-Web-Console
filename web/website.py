@@ -1,4 +1,6 @@
+import time
 from flask import Flask, abort, flash, redirect, render_template, session, request
+from flask_mobility import Mobility
 from server.server_manager import ServerManager
 from config.configs import ObsidiaConfigParser
 import uuid
@@ -13,10 +15,11 @@ web_port = int(site_configs.get("Website", "port").strip())
 server_password = site_configs.get("Website", "password").strip()
 
 app = Flask(__name__, static_folder=os.path.join("pages", "static"), template_folder="pages")
+mobility = Mobility(app)
 app.secret_key = str(uuid.uuid4())
 
 
-class Login():
+class Login:
     '''Check if a given session is logged in, as well as logging in and out.'''
 
     @staticmethod
@@ -54,14 +57,33 @@ def selectserver():
         return redirect("/serverlist")
 
 
-@app.route("/server")
+@app.route("/server", methods=["GET", "POST"])
 def server():
-    if not Login.check_login(session):
-        abort(404)
-    elif "serverselection" not in session:
-        return redirect("/serverlist")
-    else:
-        return render_template("server.html")
+    if request.method == "GET":
+        if not Login.check_login(session):
+            abort(404)
+        elif "serverselection" not in session:
+            return redirect("/serverlist")
+        else:
+            if request.MOBILE:
+                return render_template("server_mobile.html")
+            else:
+                return render_template("server.html")
+    elif request.method == "POST":
+        manager = get_manager(session["serverselection"])
+        selection = request.form.get("statusbutton", default=None)
+        if selection != None:
+            if selection == "stop" and manager.server_should_be_running():
+                manager.stop_server()
+            elif selection == "start" and not manager.server_should_be_running():
+                manager.start_server()
+            elif selection == "return":
+                return redirect("/serverlist")
+        else:
+            command = request.form.get("commandentry", default=None)
+            manager.write(command)
+            time.sleep(1)
+        return redirect("/server")
 
 
 @app.errorhandler(404)
@@ -75,9 +97,13 @@ def get_manager(server_name: str) -> ServerManager:
             return server.manager
 
 
-def get_server_info() -> str:
-    # TODO: turn this into a function or group of functions that server.html can use to build itself
-    return session["serverselection"]
+def get_server_list() -> set[ServerManager]:
+    return server_handlers
+
+
+def get_server_name() -> str:
+    manager = get_manager(session["serverselection"])
+    return manager.get_name()
 
 
 def get_server_log() -> list[str]:
@@ -85,13 +111,23 @@ def get_server_log() -> list[str]:
     return manager.get_latest_log()
 
 
-def get_server_list() -> set[ServerManager]:
-    return server_handlers
+def get_server_status() -> str:
+    manager = get_manager(session["serverselection"])
+    if manager.server_active():
+        return "Online"
+    elif manager.server_should_be_running():
+        return "Changing State"
+    return "Offline"
 
 
-app.jinja_env.globals.update(get_server_info=get_server_info)
-app.jinja_env.globals.update(get_server_log=get_server_log)
-app.jinja_env.globals.update(get_server_list=get_server_list)
+@app.context_processor
+def inject_load():
+    symbols = dict()
+    symbols["get_server_list"] = get_server_list
+    symbols["get_server_name"] = get_server_name
+    symbols["get_server_log"] = get_server_log
+    symbols["get_server_status"] = get_server_status
+    return symbols
 
 
 @app.route("/login")

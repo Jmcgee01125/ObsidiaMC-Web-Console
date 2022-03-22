@@ -44,21 +44,30 @@ if __name__ == "__main__":
             server_handlers.add(ServerHandler(path))
 
     for handler in server_handlers:
-        # asyncio.run(handler.start_server())
         pass  # DEBUG: disabled
+        # asyncio.run(handler.start_server())
 
     website.start(server_handlers)
 
-    # ctrl-c in the console, shut down all servers
-    # the servers seem to grab ctrl C and shut down themselves, so these should fail
+    # ctrl-c in the console, shut down all servers that haven't caught it already
     for handler in server_handlers:
-        # handler.manager.stop_server()
-        pass  # DEBUG: disabled
+        try:
+            handler.manager.stop_server()
+        except Exception:
+            pass  # ignore "already shut down" errors
 
-    print("Waiting for latent threads to close.")
-    for thread in threading.enumerate():
-        if thread != threading.current_thread():
-            print(f"Waiting for {thread.getName()}.")
-            thread.join()
+    if threading.active_count() > 1:
+        print("Waiting for latent threads to close:")
+        for thread in threading.enumerate():
+            if thread != threading.current_thread():
+                print(f"\t{thread.getName()}")
+        asyncio.run(asyncio.sleep(5))
 
-    print("Shutting down main.")
+    if threading.active_count() > 1:
+        print("Some threads remain:")
+        for thread in threading.enumerate():
+            if thread != threading.current_thread():
+                print(f"\t{thread.getName()}")
+        print("Raising SystemExit to attempt to close them.")
+        print("If this doesn't close the terminal, try killing the task I guess.")
+        raise SystemExit

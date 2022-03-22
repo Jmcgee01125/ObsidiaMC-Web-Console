@@ -1,3 +1,11 @@
+:root {
+    --main-color: #a11818;
+    --secondary-color: #cf2828;
+    --background-main-color: #1e1e1e;
+    --background-secondary-color: #353535;
+    --text-color: #ffffff
+}
+
 a {
     background-color: transparent;
 }
@@ -14,7 +22,7 @@ button, input, textarea, optgroup {
 select {
     font: inherit;
     margin: 0;
-    border: thin solid #a11818;
+    border: thin solid var(--main-color);
     border-radius: 0.25em;
     line-height: 1.5em;
     padding: 0.5em 3.5em 0.5em 1em;
@@ -24,8 +32,8 @@ html, body {
     font-family: Verdana, sans-serif;
     font-size: 1em;
     line-height: 1.5;
-    color: #ffffff;
-    background-color: #1e1e1e;
+    color: var(--text-color);
+    background-color: var(--background-main-color);
 }
 
 .container {
@@ -33,13 +41,13 @@ html, body {
 }
 
 .color-main {
-    color: #ffffff !important;
-    background-color: #a11818 !important;
+    color: var(--text-color) !important;
+    background-color: var(--main-color) !important;
 }
 
 .color-secondary {
-    color: #ffffff !important;
-    background-color: #353535 !important;
+    color: var(--text-color) !important;
+    background-color: var(--background-secondary-color) !important;
 }
 
 .input {
@@ -58,7 +66,7 @@ html, body {
 
 .border-top {
     border-style: solid;
-    border-color: #1e1e1e !important;
+    border-color: var(--background-main-color) !important;
     border-right: 0;
     border-left: 0;
     border-bottom: 0;
@@ -71,7 +79,6 @@ html, body {
 .page-footer {
     position: fixed;
     bottom: 1em;
-    left: 1em;
     right: 1em;
 }
 
@@ -96,10 +103,11 @@ html, body {
     text-align: center;
     cursor: pointer;
     white-space: nowrap;
+    transition: .15s ease-in
 }
 
 .button:hover {
-    opacity: 0.8;
+    background-color: var(--secondary-color) !important;
 }
 
 .rounded {

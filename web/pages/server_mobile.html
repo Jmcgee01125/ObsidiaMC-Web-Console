@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 {% include "logout_footer.html" %}
-<div class="center shadow rounded color-secondary" style="width:70%; margin:0; float:left">
+<div class="center shadow rounded color-secondary" style="width:100%; margin:0">
     <p class="header container color-main center rounded-top-small" style="margin:0">Console - {{ get_server_name() }}
     </p>
-    <div style="height:85vh; overflow-y:auto">
+    <div style="height:70vh; overflow-y:auto">
         <div id="consolebox" class="describe"
             style="padding-top:0; padding-bottom:0; padding-left:1em; padding-right:1em; text-align:start">
             {% with logs = get_server_log() %}
@@ -18,16 +18,15 @@
         document.getElementById("consolebox").lastElementChild.scrollIntoView();
         window.scrollTo(0, 0);
     </script>
-    <form action="/server" method="post" class="border-top"
-        style="padding-top:1em; padding-bottom:1em; white-space:nowrap">
+    <div class="border-top" style="padding-top:0.5em; padding:1em; white-space:nowrap">
         <input id="commandentry" name="commandentry" class="input" placeholder="Enter command" type="text"
-            style="width:70%; display:inline-block"></input>
-        <button name="commandbutton" type="submit" class="button color-main center"
-            style="margin-left:2em; display:inline-block">Send</button>
-    </form>
+            style="width:50%; display:inline-block"></input>
+        <button id="commandbutton" type="button" class="button color-main center padding:1em"
+            style="margin-left:1em; display:inline-block">Send</button>
+    </div>
 </div>
 
-<div class="center" style="width:29%; margin:0; float:right">
+<div class="center" style="width:100%; margin:0; margin-top:1em; margin-bottom:5em">
     <div class="center shadow rounded color-secondary" style="margin-bottom:1em">
         <p class="header container color-main center rounded-top-small" style="margin:0">Status and Commands</p>
         <div style="height:fit-content; overflow-y:auto">

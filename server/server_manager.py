@@ -227,6 +227,8 @@ class ServerManager:
 
     def server_active(self) -> bool:
         '''Returns true if the server is active and ready to take commands.'''
+        if self.server == None:
+            return False
         return self.server.is_ready()
 
     def _load_server_information(self):
