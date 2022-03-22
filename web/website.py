@@ -68,6 +68,8 @@ def server():
             abort(404)
         elif "serverselection" not in session:
             return redirect("/serverlist")
+        elif session["serverselection"] == None:
+            abort(404)
         else:
             if request.MOBILE:
                 return render_template("server_mobile.html")
@@ -99,7 +101,9 @@ def backup():
             manager.backup_world()
         elif selection == "restore":
             try:
-                manager.restore_backup(request.form.get("restoreselection"))
+                backup = request.form.get("restoreselection")
+                if backup != None:
+                    manager.restore_backup(backup)
             except RuntimeError:
                 return redirect("/error_restoredbackupwhenrunning")
         return redirect("/server")
