@@ -191,7 +191,10 @@ class ServerManager:
 
     def list_backups(self) -> list[str]:
         '''Returns a list of world backups.'''
-        return os.listdir(self._backup_directory)
+        try:
+            return os.listdir(self._backup_directory)
+        except FileNotFoundError:
+            return ""
 
     def restore_backup(self, backup: str):
         '''
@@ -232,9 +235,12 @@ class ServerManager:
         return self.server.is_ready()
 
     def _load_server_information(self):
-        config = MCPropertiesParser(os.path.join(self.server_directory, "server.properties"))
-        self._level_name = config.get("level-name").strip()
-        self._motd = config.get("motd").strip()
+        try:
+            config = MCPropertiesParser(os.path.join(self.server_directory, "server.properties"))
+            self._level_name = config.get("level-name").strip()
+            self._motd = config.get("motd").strip()
+        except FileNotFoundError:
+            raise FileNotFoundError("You must run your servers before using the server manager.")
 
     def _update_server_listeners(self, message: str):
         timestamp = f"[{datetime.now().strftime('%H:%M:%S')}] [Manager]: "
@@ -248,6 +254,7 @@ class ServerManager:
     def reload_configs(self):
         '''Reload the configs from the current config file.'''
         config = ObsidiaConfigParser(os.path.join(self.server_directory, self.config_file))
+
         # NOTE: the config items could be None or invalid in some cases, but crashing is fine in these circumstances
         try:
             self._server_jar = config.get("Server Information", "server_jar")
