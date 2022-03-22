@@ -73,6 +73,8 @@ PLEASE change from the default value.
 
 directory
 The directory where servers are located.
+Please note that this is not the directory of the server itself. It is the directory above that.
+For a server in "servers_dir/my_server/server.jar" this would be "servers_dir" and NOT "my_server".
 Directories from root/C/whatever are recommended, but not required (relative to the cwd of the web console).
 
 start_all_servers_on_startup
