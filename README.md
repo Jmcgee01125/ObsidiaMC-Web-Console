@@ -28,7 +28,7 @@ Automatic, user-defined restarts and backups.
 
 ## Setup
 
-1) Clone this repository (git clone <url>).
+1) Clone this repository (git clone \<url\>).
   
 2) Open "config/obsidia_website.conf" with any text editor.
   
@@ -66,4 +66,6 @@ Automatic, user-defined restarts and backups.
 
 ![image](https://user-images.githubusercontent.com/38796431/159392081-f20ef5f2-56a8-4b24-ab43-b449daf8adfc.png)
 
-![image](https://user-images.githubusercontent.com/38796431/159392127-947c4ccc-1828-4ed3-a460-6f9d371e7d0b.png)
+![image](https://user-images.githubusercontent.com/38796431/159396804-7b52ba9e-216c-4374-a417-b7249ee382f8.png)
+
+![image](https://user-images.githubusercontent.com/38796431/159396850-49902ddb-b632-4baa-83fd-88345012fc45.png)
