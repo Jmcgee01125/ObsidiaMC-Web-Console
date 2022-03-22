@@ -50,7 +50,8 @@
     <div class="center shadow rounded color-secondary" style="margin-bottom:1em">
         <p class="header container color-main center rounded-top-small" style="margin:0">Backups</p>
         <div style="height:fit-content; overflow-y:auto">
-            <form action="/backup" method="post" class="center" style="margin:1em">
+            <form action="/backup" method="post" class="center" style="margin:1em"
+                onsubmit="return confirm('Are you sure?');">
                 <button name="backupbutton" type="submit" class="button color-main center" style="margin:1em"
                     value="backup">Backup</button><br>
                 <select name="restoreselection" id="restoreselection" class="color-secondary shadow">
