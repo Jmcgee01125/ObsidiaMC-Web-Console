@@ -21,7 +21,7 @@ These arguments are parsed as "java <args> -jar <jarname> -nogui"
 autorestart
 Automatically restart the server at specific times.
 
-autorestart_datetime=S 0000
+autorestart_datetime
 The datetime to restart the server at (No effect if autorestart is false).
 Follows the format of SMTWRFD HHMM, where SMTWRFD indicates days (Sun -> Sat) when a restart should occur.
 HHMM is the time, in 24 hour time (0000 -> 2359) that the restart should happen at.

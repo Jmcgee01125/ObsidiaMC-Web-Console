@@ -28,7 +28,13 @@ Automatic, user-defined restarts and backups.
 
 ## Setup
 
-1) Clone this repository (git clone \<url\>).
+1) Download this repository.
+
+    1) Do either of the following:
+
+        1) `git clone <repository url>` in your terminal/console.
+
+        2) Code > Download ZIP (from the GitHub page).
   
 2) Open "config/obsidia_website.conf" with any text editor.
   
@@ -39,6 +45,8 @@ Automatic, user-defined restarts and backups.
     3) Set the directory where your servers are stored. This can be relative to \_\_main__.py, or absolute.
     
         1) This should be a folder containing the folders of servers. E.g. "directory" from "directory/myserver/server.jar".
+
+        2) You must launch the server at least once before using it with the web console. Otherwise, it will crash.
   
 3) Start the program by running \_\_main__.py.
   
