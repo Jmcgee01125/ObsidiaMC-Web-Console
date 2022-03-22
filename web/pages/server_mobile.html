@@ -31,7 +31,7 @@
         <p class="header container color-main center rounded-top-small" style="margin:0">Status and Commands</p>
         <div style="height:fit-content; overflow-y:auto">
             <div class="title" style="margin:1em">
-                p>Server Status: </p>
+                <p>Server Status: </p>
                 <p>{{ get_server_status() }}</p>
             </div>
             <form action="/server" method="post" class="center" style="margin:1em">
@@ -43,6 +43,24 @@
                     value="refresh">Refresh</button><br>
                 <button name="statusbutton" type="submit" class="button color-main center" style="margin:1em"
                     value="return">Return to List</button>
+            </form>
+        </div>
+    </div>
+    <div class="center shadow rounded color-secondary" style="margin-bottom:1em">
+        <p class="header container color-main center rounded-top-small" style="margin:0">Backups</p>
+        <div style="height:fit-content; overflow-y:auto">
+            <form action="/backup" method="post" class="center" style="margin:1em">
+                <button name="backupbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="backup">Backup</button><br>
+                <select name="restoreselection" id="restoreselection" class="color-secondary shadow">
+                    {% with backups = get_backup_list() %}
+                    {% for backup in backups %}
+                    <option value="{{ backup }}">{{ epoch_to_human(backup) }}</option>
+                    {% endfor %}
+                    {% endwith %}
+                </select>
+                <button name="backupbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="restore">Restore</button><br>
             </form>
         </div>
     </div>

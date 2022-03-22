@@ -1,8 +1,9 @@
-import time
 from flask import Flask, abort, flash, redirect, render_template, session, request
 from flask_mobility import Mobility
 from server.server_manager import ServerManager
 from config.configs import ObsidiaConfigParser
+from datetime import datetime
+import time
 import uuid
 import os
 
@@ -89,6 +90,31 @@ def server():
         return redirect("/server")
 
 
+@app.route("/backup", methods=["GET", "POST"])
+def backup():
+    if request.method == "POST":
+        manager = get_manager(session["serverselection"])
+        selection = request.form.get("backupbutton")
+        if selection == "backup":
+            manager.backup_world()
+        elif selection == "restore":
+            try:
+                manager.restore_backup(request.form.get("restoreselection"))
+            except RuntimeError:
+                return redirect("/error_restoredbackupwhenrunning")
+        return redirect("/server")
+    else:
+        abort(404)
+
+
+@app.route("/error_restoredbackupwhenrunning")
+def error_restore():
+    if not Login.check_login(session):
+        abort(404)
+    else:
+        return render_template("error_restore.html")
+
+
 @app.errorhandler(404)
 def error_404(error):
     return redirect("/")
@@ -124,6 +150,19 @@ def get_server_status() -> str:
     return "Offline"
 
 
+def get_backup_list() -> list[str]:
+    manager = get_manager(session["serverselection"])
+    return manager.list_backups()
+
+
+def epoch_to_human(epoch: int) -> str:
+    '''Convert epoch to <local mmddyyyy> HH:MM:SS'''
+    try:
+        return datetime.fromtimestamp(int(epoch)).strftime("%D %H:%M:%S")
+    except ValueError:  # not an epoch
+        return epoch
+
+
 @app.context_processor
 def inject_load():
     symbols = dict()
@@ -131,6 +170,8 @@ def inject_load():
     symbols["get_server_name"] = get_server_name
     symbols["get_server_log"] = get_server_log
     symbols["get_server_status"] = get_server_status
+    symbols["get_backup_list"] = get_backup_list
+    symbols["epoch_to_human"] = epoch_to_human
     return symbols
 
 

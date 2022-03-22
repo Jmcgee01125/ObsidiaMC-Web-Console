@@ -40,7 +40,7 @@ backup
 If true, do backups at the specified interval.
 
 max_backups
-The maximum number of (automatic) backups to keep.
+The maximum number of backups to keep.
 Older backups will be deleted when new ones are made.
 To disable, use a value less than or equal to 0.
 

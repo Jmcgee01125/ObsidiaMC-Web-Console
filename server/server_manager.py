@@ -240,7 +240,10 @@ class ServerManager:
         timestamp = f"[{datetime.now().strftime('%H:%M:%S')}] [Manager]: "
         # headache: since the loop gets stuck in monitoring, it couldn't run this task
         # to fix: make sure that the monitor has an awaitable that lets other tasks go
-        asyncio.get_running_loop().create_task(self.server._update_listeners(timestamp + message))
+        try:
+            asyncio.get_running_loop().create_task(self.server._update_listeners(timestamp + message))
+        except RuntimeError:  # called without async
+            pass
 
     def reload_configs(self):
         '''Reload the configs from the current config file.'''
