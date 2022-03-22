@@ -28,7 +28,13 @@ Automatic, user-defined restarts and backups.
 
 ## Setup
 
-1) Clone this repository (git clone \<url\>).
+1) Download this repository.
+
+    1) Do either of the following:
+
+        1) `git clone <repository url>` in your terminal/console.
+
+        2) Code > Download ZIP (from the GitHub page).
   
 2) Open "config/obsidia_website.conf" with any text editor.
   
