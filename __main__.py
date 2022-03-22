@@ -43,7 +43,11 @@ if __name__ == "__main__":
     for folder in os.listdir(server_dir):
         path = os.path.join(server_dir, folder)
         if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
-            server_handlers.add(ServerHandler(path))
+            try:
+                server_handlers.add(ServerHandler(path))
+            except FileNotFoundError as e:
+                print(f"[WARNING] {e} Failed for server: {path}")
+                input("Press enter to continue for other servers.")
 
     if configs.get("Servers", "start_all_servers_on_startup").lower() == "true":
         for handler in server_handlers:
