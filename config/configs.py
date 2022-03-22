@@ -74,8 +74,8 @@ class ObsidiaConfigParser:
                     pass
                 self._parser.set(section, option, default_value)
                 self.write()
-            return default_value
-        return value
+            return default_value.strip()
+        return value.strip()
 
     def add_section(self, section: str):
         '''Add a new section to the config.'''

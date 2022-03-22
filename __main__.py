@@ -28,33 +28,32 @@ class ServerHandler:
         self.server_directory = server_directory
         self.manager: ServerManager = ServerManager(self.server_directory)
 
-    async def start_server(self):
-        await self.manager.start_server()
+    def start_server(self):
+        self.manager.start_server()
 
     def __str__(self):
         return self.manager.get_name()
 
 
 if __name__ == "__main__":
-    server_dir = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf")).get("Servers", "directory")
+    configs = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf"))
+
+    server_dir = configs.get("Servers", "directory")
     server_handlers: set[ServerHandler] = set()
     for folder in os.listdir(server_dir):
         path = os.path.join(server_dir, folder)
         if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
             server_handlers.add(ServerHandler(path))
 
-    for handler in server_handlers:
-        pass  # DEBUG: disabled
-        # asyncio.run(handler.start_server())
+    if configs.get("Servers", "start_all_servers_on_startup").lower() == "true":
+        for handler in server_handlers:
+            handler.start_server()
 
     website.start(server_handlers)
 
     # ctrl-c in the console, shut down all servers that haven't caught it already
     for handler in server_handlers:
-        try:
-            handler.manager.stop_server()
-        except Exception:
-            pass  # ignore "already shut down" errors
+        handler.manager.stop_server()
 
     if threading.active_count() > 1:
         print("Waiting for latent threads to close:")

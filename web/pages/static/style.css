@@ -6,15 +6,7 @@
     --text-color: #ffffff
 }
 
-a {
-    background-color: transparent;
-}
-
-img {
-    border-style: none;
-}
-
-button, input, textarea, optgroup {
+button, input {
     font: inherit;
     margin: 0;
 }
@@ -125,12 +117,4 @@ html, body {
 
 .shadow {
     box-shadow: 0 0.25em 0.5em 0 rgba(0, 0, 0, 0.16), 0 0.25em 1.25em 0 rgba(0, 0, 0, 0.12);
-}
-
-.shadow-card {
-    box-shadow: 0 0.25em 0.5em 0 rgba(0, 0, 0, 0.16), 0 0.25em 1.25em 0 rgba(0, 0, 0, 0.12);
-}
-
-.shadow-card:hover {
-    box-shadow: 0 0.5em 1em 0 rgba(0, 0, 0, 0.2), 0 0.5em 1.25em 0 rgba(0, 0, 0, 0.19);
 }

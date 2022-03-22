@@ -130,7 +130,7 @@ class ServerRunner:
             self._server.stdin.flush()
             self._server.communicate(b"stop\n", timeout=5)
         except Exception as e:
-            print("Stop command failed:", e, "\n\t(Server may already be shut down.)")
+            print("Stop command failed:", e, "\n\t(Server may already be offline.)")
         finally:
             self._is_ready = False
 

@@ -10,9 +10,9 @@ import os
 login_code = str(uuid.uuid4()) + "extras"
 
 site_configs = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf"))
-online = site_configs.get("Website", "internet").strip().lower() == "true"
-web_port = int(site_configs.get("Website", "port").strip())
-server_password = site_configs.get("Website", "password").strip()
+online = site_configs.get("Website", "internet").lower() == "true"
+web_port = int(site_configs.get("Website", "port"))
+server_password = site_configs.get("Website", "password")
 
 app = Flask(__name__, static_folder=os.path.join("pages", "static"), template_folder="pages")
 mobility = Mobility(app)
@@ -24,14 +24,17 @@ class Login:
 
     @staticmethod
     def check_login(s) -> bool:
+        '''Return true if logged in for this app, false otherwise.'''
         return "session_password" in s and s["session_password"] == login_code
 
     @staticmethod
     def log_in_user(s):
+        '''Gives the user the login code.'''
         s["session_password"] = login_code
 
     @staticmethod
     def log_out_user(s):
+        '''Resets the user's login code.'''
         s["session_password"] = ""
 
 
@@ -92,6 +95,7 @@ def error_404(error):
 
 
 def get_manager(server_name: str) -> ServerManager:
+    '''Return the manager of the given server name.'''
     for server in server_handlers:
         if server.__str__() == server_name:
             return server.manager

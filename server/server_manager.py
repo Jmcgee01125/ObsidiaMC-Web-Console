@@ -65,19 +65,19 @@ class ServerManager:
         self._is_autorestarting = True
         self.server.stop()
 
-    async def start_server(self):
+    def start_server(self):
         '''Creates a new thread to run the server in and a thread to monitor it for crashing/backups/etc.'''
         self._server_should_be_running = True
         self.server = ServerRunner(self.server_directory, server_name=self.get_name(), jarname=self._server_jar, args=self._args)
-        await self._spawn_server_thread()
-        await self._spawn_monitor_thread()
+        self._spawn_server_thread()
+        self._spawn_monitor_thread()
 
-    async def _spawn_server_thread(self):
+    def _spawn_server_thread(self):
         self._server_start_time = self._get_current_time()
         self._server_thread = threading.Thread(target=self._asynced_server_start, name=f"ServerThread")
         self._server_thread.start()
 
-    async def _spawn_monitor_thread(self):
+    def _spawn_monitor_thread(self):
         self._monitor_thread = threading.Thread(target=self._asynced_running_loop_start, name=f"MonitorThread")
         self._monitor_thread.start()
 
@@ -247,20 +247,20 @@ class ServerManager:
         config = ObsidiaConfigParser(os.path.join(self.server_directory, self.config_file))
         # NOTE: the config items could be None or invalid in some cases, but crashing is fine in these circumstances
         try:
-            self._server_jar = config.get("Server Information", "server_jar").strip()
-            self._server_name = config.get("Server Information", "server_name").strip()
+            self._server_jar = config.get("Server Information", "server_jar")
+            self._server_name = config.get("Server Information", "server_name")
             if self._server_name == "":
                 self._server_name = None
-            self._args = config.get("Server Information", "args").strip().split(" ")
+            self._args = config.get("Server Information", "args").split(" ")
 
-            self._do_autorestart = config.get("Restarts", "autorestart").strip().lower() == "true"
-            self._autorestart_datetime = config.get("Restarts", "autorestart_datetime").strip()
-            self._restart_on_crash = config.get("Restarts", "restart_on_crash").strip().lower() == "true"
+            self._do_autorestart = config.get("Restarts", "autorestart").lower() == "true"
+            self._autorestart_datetime = config.get("Restarts", "autorestart_datetime")
+            self._restart_on_crash = config.get("Restarts", "restart_on_crash").lower() == "true"
 
-            self._do_backups = config.get("Backups", "backup").strip().lower() == "true"
-            self._max_backups = int(config.get("Backups", "max_backups").strip())
-            self._backup_datetime = config.get("Backups", "backup_datetime").strip()
-            self._backup_directory = os.path.join(self.server_directory, config.get("Backups", "backup_folder").strip())
+            self._do_backups = config.get("Backups", "backup").lower() == "true"
+            self._max_backups = int(config.get("Backups", "max_backups"))
+            self._backup_datetime = config.get("Backups", "backup_datetime")
+            self._backup_directory = os.path.join(self.server_directory, config.get("Backups", "backup_folder"))
 
             config.write()
         except Exception as e:

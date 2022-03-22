@@ -74,3 +74,7 @@ PLEASE change from the default value.
 directory
 The directory where servers are located.
 Directories from root/C/whatever are recommended, but not required (relative to the cwd of the web console).
+
+start_all_servers_on_startup
+If true, then all servers will be started when the program starts.
+Otherwise, each will have to be turned on manually in the web console.

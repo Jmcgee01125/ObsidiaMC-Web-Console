@@ -31,23 +31,19 @@
         <p class="header container color-main center rounded-top-small" style="margin:0">Status and Commands</p>
         <div style="height:fit-content; overflow-y:auto">
             <div class="title" style="margin:1em">
-                <span>Server Status: </span>
-                <span style="width:50%; padding-left:1em; padding-right:1em">{{ get_server_status() }}</span>
+                p>Server Status: </p>
+                <p>{{ get_server_status() }}</p>
             </div>
-            <form action="/server" method="post" style="margin-bottom:0.5em">
-                <button name="statusbutton" type="submit" class="button color-main center" value="stop">Stop</button>
-                <button name="statusbutton" type="submit" class="button color-main center" value="start">Start</button>
-                <button name="statusbutton" type="submit" class="button color-main center"
-                    value="refresh">Refresh</button>
-                <button name="statusbutton" type="submit" class="button color-main center" value="return">Return to
-                    List</button>
+            <form action="/server" method="post" class="center" style="margin:1em">
+                <button name="statusbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="stop">Stop</button><br>
+                <button name="statusbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="start">Start</button><br>
+                <button name="statusbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="refresh">Refresh</button><br>
+                <button name="statusbutton" type="submit" class="button color-main center" style="margin:1em"
+                    value="return">Return to List</button>
             </form>
-        </div>
-    </div>
-    <div class="center shadow rounded color-secondary">
-        <p class="header container color-main center rounded-top-small" style="margin:0">Settings</p>
-        <div style="height:60vh; overflow-y:auto">
-            TODO: two columns, load dict for server.properties and obsidia.conf
         </div>
     </div>
 </div>
