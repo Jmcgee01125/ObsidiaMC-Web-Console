@@ -40,14 +40,19 @@ if __name__ == "__main__":
 
     server_dir = configs.get("Servers", "directory")
     server_handlers: set[ServerHandler] = set()
-    for folder in os.listdir(server_dir):
-        path = os.path.join(server_dir, folder)
-        if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
-            try:
-                server_handlers.add(ServerHandler(path))
-            except FileNotFoundError as e:
-                print(f"[WARNING] {e} Failed for server: {path}")
-                input("Press enter to continue for other servers.")
+    try:
+        for folder in os.listdir(server_dir):
+            path = os.path.join(server_dir, folder)
+            if len(glob.glob(os.path.join(path, "*.jar"))) != 0:
+                try:
+                    server_handlers.add(ServerHandler(path))
+                except FileNotFoundError as ex:
+                    print(f"[WARNING] {ex} Failed for server: {path}")
+                    input("Press enter to continue for other servers.")
+    except FileNotFoundError as e:
+        print(f"[ERROR] Cannot reach servers directory ({server_dir}). Did you configure it correctly?")
+        input("Press enter to close.")
+        raise SystemExit
 
     if configs.get("Servers", "start_all_servers_on_startup").lower() == "true":
         for handler in server_handlers:
