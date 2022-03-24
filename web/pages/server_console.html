@@ -1,0 +1,22 @@
+<p class="header container color-main center rounded-top-small" style="margin:0">Console - {{ get_server_name() }}
+</p>
+<div style="height:85vh; overflow-y:auto">
+    <div id="consolebox" class="describe"
+        style="padding-top:0; padding-bottom:0; padding-left:1em; padding-right:1em; text-align:start">
+        {% with logs = get_server_log() %}
+        {% for log in logs %}
+        <p>{{ log }}</p>
+        {% endfor %}
+        {% endwith %}
+    </div>
+</div>
+<script>
+    document.getElementById("consolebox").lastElementChild.scrollIntoView();
+    window.scrollTo(0, 0);
+</script>
+<form action="/server" method="post" class="border-top" style="padding-top:1em; padding-bottom:1em; white-space:nowrap">
+    <input id="commandentry" name="commandentry" class="input" placeholder="Enter command" type="text"
+        style="width:70%; display:inline-block"></input>
+    <button name="commandbutton" type="submit" class="button color-main center"
+        style="margin-left:2em; display:inline-block">Send</button>
+</form>
