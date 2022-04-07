@@ -46,8 +46,11 @@ class ServerRunner:
     async def start(self):
         '''Start the server process if not already started.'''
         if (self._server == None or not self.is_active()):
-            self._server = subprocess.Popen(["java"] + self._args + ["-jar"] + [self._jarname] + ["-nogui"],
-                                            stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
+            cmd = f"java "
+            for arg in self._args:
+                cmd += f"{arg} "
+            cmd += f"-jar {self._jarname} -nogui"
+            self._server = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, shell=True, cwd=self.server_directory)
             await self._listen_for_logs()
 
     async def _listen_for_logs(self):
