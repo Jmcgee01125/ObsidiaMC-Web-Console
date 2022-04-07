@@ -48,6 +48,8 @@ backup_datetime
 The datetime to backup the server at (No effect if backup is false).
 Follows the format of SMTWRFD HHMM, where SMTWRFD indicates days (Sun -> Sat) when a backup should occur.
 HHMM is the time, in 24 hour time (0000 -> 2359) that the backup should happen at.
+Note that, if this is the same as an autorestart time, it's possible that saving is DISABLED until the next "backup."
+    (Saving is disabled when a backup starts and enabled when it ends, but if the server restarts then it may miss the enable).
 
 backup_folder
 The folder to make backups in.
