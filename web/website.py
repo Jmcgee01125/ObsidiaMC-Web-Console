@@ -1,8 +1,9 @@
 from flask import Flask, abort, flash, redirect, render_template, session, request
-from flask_mobility import Mobility
 from server.server_manager import ServerManager
 from config.configs import ObsidiaConfigParser
+from flask_mobility import Mobility
 from datetime import datetime
+from typing import List, Set
 import time
 import uuid
 import os
@@ -131,7 +132,7 @@ def get_manager(server_name: str) -> ServerManager:
             return server.manager
 
 
-def get_server_list() -> set[ServerManager]:
+def get_server_list() -> Set[ServerManager]:
     return server_handlers
 
 
@@ -140,7 +141,7 @@ def get_server_name() -> str:
     return manager.get_name()
 
 
-def get_server_log() -> list[str]:
+def get_server_log() -> List[str]:
     manager = get_manager(session["serverselection"])
     return manager.get_latest_log()
 
@@ -154,7 +155,7 @@ def get_server_status() -> str:
     return "Offline"
 
 
-def get_backup_list() -> list[str]:
+def get_backup_list() -> List[str]:
     manager = get_manager(session["serverselection"])
     return manager.list_backups()
 

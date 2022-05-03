@@ -6,7 +6,7 @@ A python-based web console for Minecraft servers.
 
 ## Requirements
 
-python 3.9+
+python 3.8+
 
 flask (pip install flask)
 

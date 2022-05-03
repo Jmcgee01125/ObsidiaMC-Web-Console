@@ -2,6 +2,7 @@ from server.server_manager import ServerManager
 from config.configs import ObsidiaConfigParser
 from server.server import ServerListener
 from web import website
+from typing import Set
 import threading
 import asyncio
 import glob
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     configs = ObsidiaConfigParser(os.path.join("config", "obsidia_website.conf"))
 
     server_dir = configs.get("Servers", "directory")
-    server_handlers: set[ServerHandler] = set()
+    server_handlers: Set[ServerHandler] = set()
     try:
         for folder in os.listdir(server_dir):
             path = os.path.join(server_dir, folder)
