@@ -4,6 +4,12 @@ A python-based web console for Minecraft servers.
 
 ---
 
+## Note
+
+It is highly recommended that you instead use [the discord console version](https://github.com/Jmcgee01125/ObsidiaMC-Discord-Console). There are significant improvements in the backend and it is more secure.
+
+---
+
 ## Requirements
 
 python 3.8+
